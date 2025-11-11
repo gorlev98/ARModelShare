@@ -18,7 +18,10 @@ export const shareService = {
     const { data: insertedData, error } = await supabase
       .from('shared_links')
       .insert([shareData])
-      .select()
+      .select(`
+        *,
+        models!shared_links_model_id_fkey(model_url)
+      `)
       .single();
 
     if (error) throw new Error(`Failed to create share link: ${error.message}`);
@@ -27,10 +30,12 @@ export const shareService = {
       id: insertedData.id,
       userId: insertedData.user_id,
       modelId: insertedData.model_id,
+      modelUrl: insertedData.models?.model_url || data.modelUrl,
       modelName: insertedData.model_name,
       isActive: insertedData.is_active,
       expiresAt: insertedData.expires_at,
       createdAt: insertedData.created_at,
+      qrOptions: data.qrOptions,
       views: insertedData.views,
       scans: insertedData.scans,
     };
@@ -40,7 +45,10 @@ export const shareService = {
   async getShareLink(id: string): Promise<SharedLink | null> {
     const { data, error } = await supabase
       .from('shared_links')
-      .select('*')
+      .select(`
+        *,
+        models!shared_links_model_id_fkey(model_url)
+      `)
       .eq('id', id)
       .single();
 
@@ -50,10 +58,12 @@ export const shareService = {
       id: data.id,
       userId: data.user_id,
       modelId: data.model_id,
+      modelUrl: data.models?.model_url || '',
       modelName: data.model_name,
       isActive: data.is_active,
       expiresAt: data.expires_at,
       createdAt: data.created_at,
+      qrOptions: { fgColor: '#000000', bgColor: '#ffffff', level: 'M' },
       views: data.views,
       scans: data.scans,
     };
@@ -63,7 +73,10 @@ export const shareService = {
   async getUserShareLinks(userId: string): Promise<SharedLink[]> {
     const { data, error } = await supabase
       .from('shared_links')
-      .select('*')
+      .select(`
+        *,
+        models!shared_links_model_id_fkey(model_url)
+      `)
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
@@ -73,10 +86,12 @@ export const shareService = {
       id: item.id,
       userId: item.user_id,
       modelId: item.model_id,
+      modelUrl: item.models?.model_url || '',
       modelName: item.model_name,
       isActive: item.is_active,
       expiresAt: item.expires_at,
       createdAt: item.created_at,
+      qrOptions: { fgColor: '#000000', bgColor: '#ffffff', level: 'M' },
       views: item.views,
       scans: item.scans,
     }));
@@ -86,7 +101,10 @@ export const shareService = {
   async getRecentShareLinks(userId: string, limitCount: number = 3): Promise<SharedLink[]> {
     const { data, error } = await supabase
       .from('shared_links')
-      .select('*')
+      .select(`
+        *,
+        models!shared_links_model_id_fkey(model_url)
+      `)
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(limitCount);
@@ -97,10 +115,12 @@ export const shareService = {
       id: item.id,
       userId: item.user_id,
       modelId: item.model_id,
+      modelUrl: item.models?.model_url || '',
       modelName: item.model_name,
       isActive: item.is_active,
       expiresAt: item.expires_at,
       createdAt: item.created_at,
+      qrOptions: { fgColor: '#000000', bgColor: '#ffffff', level: 'M' },
       views: item.views,
       scans: item.scans,
     }));

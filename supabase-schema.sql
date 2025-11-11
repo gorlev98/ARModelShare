@@ -61,6 +61,17 @@ CREATE POLICY "Users can view their own models"
   ON models FOR SELECT
   USING (auth.uid() = user_id);
 
+CREATE POLICY "Public can view models referenced by active shared links"
+  ON models FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM shared_links
+      WHERE shared_links.model_id = models.id
+        AND shared_links.is_active = true
+        AND shared_links.expires_at > EXTRACT(EPOCH FROM NOW()) * 1000
+    )
+  );
+
 CREATE POLICY "Users can insert their own models"
   ON models FOR INSERT
   WITH CHECK (auth.uid() = user_id);
