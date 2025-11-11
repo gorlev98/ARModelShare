@@ -1,99 +1,142 @@
-import {
-  collection,
-  doc,
-  addDoc,
-  getDoc,
-  getDocs,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  Timestamp,
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 import type { Model, InsertModel } from '@/types';
-
-const MODELS_COLLECTION = 'models';
 
 export const modelService = {
   // Create a new model record
   async createModel(data: InsertModel): Promise<Model> {
+    // Map camelCase to snake_case for database
     const modelData = {
-      ...data,
-      uploadedAt: Date.now(),
+      user_id: data.userId,
+      filename: data.filename,
+      file_size: data.fileSize,
+      model_url: data.modelUrl,
+      validation_status: data.validationStatus,
+      validation_issues: data.validationIssues || [],
+      uploaded_at: Date.now(),
     };
 
-    const docRef = await addDoc(collection(db, MODELS_COLLECTION), modelData);
-    
+    const { data: insertedData, error } = await supabase
+      .from('models')
+      .insert([modelData])
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to create model: ${error.message}`);
+
     return {
-      id: docRef.id,
-      ...modelData,
+      id: insertedData.id,
+      userId: insertedData.user_id,
+      filename: insertedData.filename,
+      fileSize: insertedData.file_size,
+      modelUrl: insertedData.model_url,
+      validationStatus: insertedData.validation_status,
+      validationIssues: insertedData.validation_issues,
+      uploadedAt: insertedData.uploaded_at,
     };
   },
 
   // Get model by ID
   async getModel(id: string): Promise<Model | null> {
-    const docRef = doc(db, MODELS_COLLECTION, id);
-    const docSnap = await getDoc(docRef);
+    const { data, error } = await supabase
+      .from('models')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    if (!docSnap.exists()) {
-      return null;
-    }
+    if (error || !data) return null;
 
     return {
-      id: docSnap.id,
-      ...docSnap.data(),
-    } as Model;
+      id: data.id,
+      userId: data.user_id,
+      filename: data.filename,
+      fileSize: data.file_size,
+      modelUrl: data.model_url,
+      validationStatus: data.validation_status,
+      validationIssues: data.validation_issues,
+      uploadedAt: data.uploaded_at,
+    };
   },
 
   // Get all models for a user
   async getUserModels(userId: string): Promise<Model[]> {
-    const q = query(
-      collection(db, MODELS_COLLECTION),
-      where('userId', '==', userId),
-      orderBy('uploadedAt', 'desc')
-    );
+    const { data, error } = await supabase
+      .from('models')
+      .select('*')
+      .eq('user_id', userId)
+      .order('uploaded_at', { ascending: false });
 
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    } as Model));
+    if (error) throw new Error(`Failed to get user models: ${error.message}`);
+
+    return (data || []).map(item => ({
+      id: item.id,
+      userId: item.user_id,
+      filename: item.filename,
+      fileSize: item.file_size,
+      modelUrl: item.model_url,
+      validationStatus: item.validation_status,
+      validationIssues: item.validation_issues,
+      uploadedAt: item.uploaded_at,
+    }));
   },
 
   // Get recent models for a user
   async getRecentModels(userId: string, limitCount: number = 6): Promise<Model[]> {
-    const q = query(
-      collection(db, MODELS_COLLECTION),
-      where('userId', '==', userId),
-      orderBy('uploadedAt', 'desc'),
-      limit(limitCount)
-    );
+    const { data, error } = await supabase
+      .from('models')
+      .select('*')
+      .eq('user_id', userId)
+      .order('uploaded_at', { ascending: false })
+      .limit(limitCount);
 
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    } as Model));
+    if (error) throw new Error(`Failed to get recent models: ${error.message}`);
+
+    return (data || []).map(item => ({
+      id: item.id,
+      userId: item.user_id,
+      filename: item.filename,
+      fileSize: item.file_size,
+      modelUrl: item.model_url,
+      validationStatus: item.validation_status,
+      validationIssues: item.validation_issues,
+      uploadedAt: item.uploaded_at,
+    }));
   },
 
   // Update model
   async updateModel(id: string, data: Partial<Model>): Promise<void> {
-    const docRef = doc(db, MODELS_COLLECTION, id);
-    await updateDoc(docRef, data);
+    const updateData: any = {};
+    if (data.filename !== undefined) updateData.filename = data.filename;
+    if (data.fileSize !== undefined) updateData.file_size = data.fileSize;
+    if (data.modelUrl !== undefined) updateData.model_url = data.modelUrl;
+    if (data.validationStatus !== undefined) updateData.validation_status = data.validationStatus;
+    if (data.validationIssues !== undefined) updateData.validation_issues = data.validationIssues;
+
+    const { error } = await supabase
+      .from('models')
+      .update(updateData)
+      .eq('id', id);
+
+    if (error) throw new Error(`Failed to update model: ${error.message}`);
   },
 
   // Delete model
   async deleteModel(id: string): Promise<void> {
-    const docRef = doc(db, MODELS_COLLECTION, id);
-    await deleteDoc(docRef);
+    const { error } = await supabase
+      .from('models')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw new Error(`Failed to delete model: ${error.message}`);
   },
 
   // Count user models
   async countUserModels(userId: string): Promise<number> {
-    const models = await this.getUserModels(userId);
-    return models.length;
+    const { count, error } = await supabase
+      .from('models')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (error) throw new Error(`Failed to count models: ${error.message}`);
+    return count || 0;
   },
 };

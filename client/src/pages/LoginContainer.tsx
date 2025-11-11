@@ -58,6 +58,8 @@ export default function LoginContainer() {
     <Login
       onEmailLogin={handleEmailLogin}
       onGoogleLogin={handleGoogleLogin}
+      isLogin={isLogin}
+      onToggleMode={() => setIsLogin(!isLogin)}
     />
   );
 }

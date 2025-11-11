@@ -5,7 +5,7 @@ export const validationService = {
   async validateModel(
     file: File,
     onStageUpdate?: (stages: ValidationStage[]) => void
-  ): Promise<{ status: 'ready' | 'failed'; issues: string[] }> {
+  ): Promise<{ status: 'ready' | 'warning' | 'error'; issues: string[] }> {
     const stages: ValidationStage[] = [
       { stage: 'file-integrity', status: 'pending' },
       { stage: 'format-validation', status: 'pending' },
@@ -18,7 +18,7 @@ export const validationService = {
     stages[0].status = 'processing';
     onStageUpdate?.(stages);
     await this.delay(800);
-    
+
     stages[0].status = 'passed';
     stages[0].message = 'File integrity verified';
     stages[1].status = 'processing';
@@ -27,7 +27,7 @@ export const validationService = {
     // Stage 2: Format Validation
     await this.delay(1000);
     const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-    
+
     if (extension === '.glb' || extension === '.gltf') {
       stages[1].status = 'passed';
       stages[1].message = `Valid ${extension.toUpperCase()} format detected`;
@@ -36,18 +36,18 @@ export const validationService = {
       stages[1].message = 'Unsupported file format';
       issues.push('File format not supported');
       onStageUpdate?.(stages);
-      return { status: 'failed', issues };
+      return { status: 'error', issues };
     }
-    
+
     stages[2].status = 'processing';
     onStageUpdate?.(stages);
 
     // Stage 3: AR Compatibility
     await this.delay(1200);
-    
+
     // Simulate random compatibility check
     const isCompatible = Math.random() > 0.1; // 90% success rate
-    
+
     if (isCompatible) {
       stages[2].status = 'passed';
       stages[2].message = 'Model is AR-compatible';
@@ -56,11 +56,15 @@ export const validationService = {
       stages[2].message = 'Model may have compatibility issues';
       issues.push('Some AR devices may not support this model');
     }
-    
+
     onStageUpdate?.(stages);
 
+    // Determine final status
+    const allPassed = stages.every(s => s.status === 'passed');
+    const hasCriticalFailure = stages.some(s => s.stage === 'format-validation' && s.status === 'failed');
+
     return {
-      status: stages.every(s => s.status === 'passed') ? 'ready' : 'failed',
+      status: allPassed ? 'ready' : hasCriticalFailure ? 'error' : 'warning',
       issues,
     };
   },

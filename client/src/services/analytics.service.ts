@@ -1,19 +1,7 @@
-import {
-  collection,
-  doc,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit,
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 import { modelService } from './model.service';
 import { shareService } from './share.service';
 import type { AnalyticsStats, ActivityEvent } from '@/types';
-
-const ACTIVITY_COLLECTION = 'activity';
 
 export const analyticsService = {
   // Get analytics stats for a user
@@ -43,30 +31,39 @@ export const analyticsService = {
     metadata?: Record<string, any>
   ): Promise<void> {
     const event = {
-      userId,
+      user_id: userId,
       type,
       description,
       timestamp: Date.now(),
       metadata: metadata || {},
     };
 
-    await addDoc(collection(db, ACTIVITY_COLLECTION), event);
+    const { error } = await supabase
+      .from('activity')
+      .insert([event]);
+
+    if (error) throw new Error(`Failed to log activity: ${error.message}`);
   },
 
   // Get recent activity for a user
   async getRecentActivity(userId: string, limitCount: number = 10): Promise<ActivityEvent[]> {
-    const q = query(
-      collection(db, ACTIVITY_COLLECTION),
-      where('userId', '==', userId),
-      orderBy('timestamp', 'desc'),
-      limit(limitCount)
-    );
+    const { data, error } = await supabase
+      .from('activity')
+      .select('*')
+      .eq('user_id', userId)
+      .order('timestamp', { ascending: false })
+      .limit(limitCount);
 
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    } as ActivityEvent));
+    if (error) throw new Error(`Failed to get recent activity: ${error.message}`);
+
+    return (data || []).map(item => ({
+      id: item.id,
+      userId: item.user_id,
+      type: item.type,
+      description: item.description,
+      timestamp: item.timestamp,
+      metadata: item.metadata,
+    }));
   },
 
   // Generate chart data for analytics

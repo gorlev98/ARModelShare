@@ -9,10 +9,11 @@ import { Separator } from '@/components/ui/separator';
 interface LoginProps {
   onEmailLogin?: (email: string, password: string) => Promise<void>;
   onGoogleLogin?: () => Promise<void>;
+  isLogin?: boolean;
+  onToggleMode?: () => void;
 }
 
-export default function Login({ onEmailLogin, onGoogleLogin }: LoginProps) {
-  const [isLogin, setIsLogin] = useState(true);
+export default function Login({ onEmailLogin, onGoogleLogin, isLogin = true, onToggleMode }: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -132,12 +133,12 @@ export default function Login({ onEmailLogin, onGoogleLogin }: LoginProps) {
           <div className="text-center text-sm">
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={onToggleMode}
               className="text-primary hover:underline"
               disabled={loading}
               data-testid="button-toggle-mode"
             >
-              {isLogin 
+              {isLogin
                 ? "Don't have an account? Sign up"
                 : 'Already have an account? Sign in'}
             </button>

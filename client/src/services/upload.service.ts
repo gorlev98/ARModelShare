@@ -1,44 +1,46 @@
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 import type { UploadProgress } from '@/types';
 
 export const uploadService = {
-  // Upload model file to Firebase Storage
+  // Upload model file to Supabase Storage
   async uploadModel(
     file: File,
     userId: string,
     onProgress?: (progress: UploadProgress) => void
   ): Promise<{ url: string; path: string }> {
     // Create unique path with user ID and timestamp
+    // Path format: userId/timestamp_filename.glb (bucket name not included in path)
     const timestamp = Date.now();
     const fileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const path = `models/${userId}/${timestamp}_${fileName}`;
-    
-    const storageRef = ref(storage, path);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    const path = `${userId}/${timestamp}_${fileName}`;
 
-    return new Promise((resolve, reject) => {
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          if (onProgress) {
-            const progress: UploadProgress = {
-              percent: (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
-              bytesUploaded: snapshot.bytesTransferred,
-              totalBytes: snapshot.totalBytes,
-            };
-            onProgress(progress);
-          }
-        },
-        (error) => {
-          reject(error);
-        },
-        async () => {
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve({ url, path });
-        }
-      );
-    });
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('models')
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (error) {
+      throw new Error(`Upload failed: ${error.message}`);
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('models')
+      .getPublicUrl(path);
+
+    // Simulate progress for now (Supabase doesn't provide upload progress out of the box)
+    if (onProgress) {
+      onProgress({
+        percent: 100,
+        bytesUploaded: file.size,
+        totalBytes: file.size,
+      });
+    }
+
+    return { url: publicUrl, path };
   },
 
   // Validate file before upload

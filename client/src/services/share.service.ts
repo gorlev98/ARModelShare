@@ -1,88 +1,125 @@
-import {
-  collection,
-  doc,
-  addDoc,
-  getDoc,
-  getDocs,
-  updateDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { supabase } from '@/lib/supabase';
 import type { SharedLink, InsertSharedLink, QROptions } from '@/types';
-
-const SHARES_COLLECTION = 'shared_links';
 
 export const shareService = {
   // Create a new shared link
   async createShareLink(data: InsertSharedLink): Promise<SharedLink> {
     const shareData = {
-      ...data,
-      createdAt: Date.now(),
+      user_id: data.userId,
+      model_id: data.modelId,
+      model_name: data.modelName,
+      is_active: data.isActive,
+      expires_at: data.expiresAt,
+      created_at: Date.now(),
       views: 0,
       scans: 0,
     };
 
-    const docRef = await addDoc(collection(db, SHARES_COLLECTION), shareData);
-    
+    const { data: insertedData, error } = await supabase
+      .from('shared_links')
+      .insert([shareData])
+      .select()
+      .single();
+
+    if (error) throw new Error(`Failed to create share link: ${error.message}`);
+
     return {
-      id: docRef.id,
-      ...shareData,
+      id: insertedData.id,
+      userId: insertedData.user_id,
+      modelId: insertedData.model_id,
+      modelName: insertedData.model_name,
+      isActive: insertedData.is_active,
+      expiresAt: insertedData.expires_at,
+      createdAt: insertedData.created_at,
+      views: insertedData.views,
+      scans: insertedData.scans,
     };
   },
 
   // Get shared link by ID
   async getShareLink(id: string): Promise<SharedLink | null> {
-    const docRef = doc(db, SHARES_COLLECTION, id);
-    const docSnap = await getDoc(docRef);
+    const { data, error } = await supabase
+      .from('shared_links')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    if (!docSnap.exists()) {
-      return null;
-    }
+    if (error || !data) return null;
 
     return {
-      id: docSnap.id,
-      ...docSnap.data(),
-    } as SharedLink;
+      id: data.id,
+      userId: data.user_id,
+      modelId: data.model_id,
+      modelName: data.model_name,
+      isActive: data.is_active,
+      expiresAt: data.expires_at,
+      createdAt: data.created_at,
+      views: data.views,
+      scans: data.scans,
+    };
   },
 
   // Get all shared links for a user
   async getUserShareLinks(userId: string): Promise<SharedLink[]> {
-    const q = query(
-      collection(db, SHARES_COLLECTION),
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc')
-    );
+    const { data, error } = await supabase
+      .from('shared_links')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    } as SharedLink));
+    if (error) throw new Error(`Failed to get user share links: ${error.message}`);
+
+    return (data || []).map(item => ({
+      id: item.id,
+      userId: item.user_id,
+      modelId: item.model_id,
+      modelName: item.model_name,
+      isActive: item.is_active,
+      expiresAt: item.expires_at,
+      createdAt: item.created_at,
+      views: item.views,
+      scans: item.scans,
+    }));
   },
 
   // Get recent shared links for a user
   async getRecentShareLinks(userId: string, limitCount: number = 3): Promise<SharedLink[]> {
-    const q = query(
-      collection(db, SHARES_COLLECTION),
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc'),
-      limit(limitCount)
-    );
+    const { data, error } = await supabase
+      .from('shared_links')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limitCount);
 
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    } as SharedLink));
+    if (error) throw new Error(`Failed to get recent share links: ${error.message}`);
+
+    return (data || []).map(item => ({
+      id: item.id,
+      userId: item.user_id,
+      modelId: item.model_id,
+      modelName: item.model_name,
+      isActive: item.is_active,
+      expiresAt: item.expires_at,
+      createdAt: item.created_at,
+      views: item.views,
+      scans: item.scans,
+    }));
   },
 
   // Update shared link
   async updateShareLink(id: string, data: Partial<SharedLink>): Promise<void> {
-    const docRef = doc(db, SHARES_COLLECTION, id);
-    await updateDoc(docRef, data);
+    const updateData: any = {};
+    if (data.isActive !== undefined) updateData.is_active = data.isActive;
+    if (data.expiresAt !== undefined) updateData.expires_at = data.expiresAt;
+    if (data.views !== undefined) updateData.views = data.views;
+    if (data.scans !== undefined) updateData.scans = data.scans;
+
+    const { error } = await supabase
+      .from('shared_links')
+      .update(updateData)
+      .eq('id', id);
+
+    if (error) throw new Error(`Failed to update share link: ${error.message}`);
   },
 
   // Revoke a shared link
@@ -98,25 +135,40 @@ export const shareService = {
 
   // Increment view count
   async incrementViews(id: string): Promise<void> {
-    const link = await this.getShareLink(id);
-    if (link) {
-      await this.updateShareLink(id, { views: link.views + 1 });
+    const { error } = await supabase.rpc('increment_views', { link_id: id });
+    if (error) {
+      // Fallback to manual increment if RPC doesn't exist
+      const link = await this.getShareLink(id);
+      if (link) {
+        await this.updateShareLink(id, { views: link.views + 1 });
+      }
     }
   },
 
   // Increment scan count
   async incrementScans(id: string): Promise<void> {
-    const link = await this.getShareLink(id);
-    if (link) {
-      await this.updateShareLink(id, { scans: link.scans + 1 });
+    const { error } = await supabase.rpc('increment_scans', { link_id: id });
+    if (error) {
+      // Fallback to manual increment if RPC doesn't exist
+      const link = await this.getShareLink(id);
+      if (link) {
+        await this.updateShareLink(id, { scans: link.scans + 1 });
+      }
     }
   },
 
   // Count active links for user
   async countActiveLinks(userId: string): Promise<number> {
-    const links = await this.getUserShareLinks(userId);
     const now = Date.now();
-    return links.filter(link => link.isActive && link.expiresAt > now).length;
+    const { count, error } = await supabase
+      .from('shared_links')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .gt('expires_at', now);
+
+    if (error) throw new Error(`Failed to count active links: ${error.message}`);
+    return count || 0;
   },
 
   // Build share URL

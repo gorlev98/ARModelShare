@@ -36,5 +36,22 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+    watch: {
+      // Exclude directories from being watched to prevent EMFILE errors
+      ignored: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/dist/**',
+        '**/coverage/**',
+        '**/.cache/**',
+        '**/.env*',
+        '**/package-lock.json',
+        '**/yarn.lock',
+        '**/pnpm-lock.yaml',
+      ],
+      // Use polling as fallback to avoid EMFILE errors
+      usePolling: true,
+      interval: 1000,
+    },
   },
 });
