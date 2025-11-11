@@ -1,0 +1,107 @@
+import { z } from "zod";
+
+// ============================================================================
+// MODEL SCHEMA - For 3D models uploaded by users
+// ============================================================================
+
+export const modelSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  filename: z.string(),
+  fileSize: z.number(),
+  modelUrl: z.string(),
+  uploadedAt: z.number(),
+  validationStatus: z.enum(['processing', 'ready', 'failed']),
+  validationIssues: z.array(z.string()).optional(),
+});
+
+export const insertModelSchema = modelSchema.omit({ 
+  id: true,
+  uploadedAt: true,
+});
+
+export type Model = z.infer<typeof modelSchema>;
+export type InsertModel = z.infer<typeof insertModelSchema>;
+
+// ============================================================================
+// SHARED LINK SCHEMA - For shareable links with QR codes
+// ============================================================================
+
+export const qrOptionsSchema = z.object({
+  fgColor: z.string().default('#000000'),
+  bgColor: z.string().default('#ffffff'),
+  level: z.enum(['L', 'M', 'Q', 'H']).default('M'),
+  logoUrl: z.string().optional(),
+});
+
+export const sharedLinkSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  modelId: z.string(),
+  modelUrl: z.string(),
+  modelName: z.string(),
+  createdAt: z.number(),
+  expiresAt: z.number(),
+  isActive: z.boolean(),
+  qrOptions: qrOptionsSchema,
+  views: z.number().default(0),
+  scans: z.number().default(0),
+});
+
+export const insertSharedLinkSchema = sharedLinkSchema.omit({ 
+  id: true,
+  createdAt: true,
+  views: true,
+  scans: true,
+});
+
+export type SharedLink = z.infer<typeof sharedLinkSchema>;
+export type InsertSharedLink = z.infer<typeof insertSharedLinkSchema>;
+export type QROptions = z.infer<typeof qrOptionsSchema>;
+
+// ============================================================================
+// ANALYTICS SCHEMA
+// ============================================================================
+
+export const analyticsStatsSchema = z.object({
+  totalModels: z.number(),
+  activeLinks: z.number(),
+  totalScans: z.number(),
+  totalViews: z.number(),
+});
+
+export const activityEventSchema = z.object({
+  id: z.string(),
+  type: z.enum(['upload', 'share', 'view', 'scan']),
+  timestamp: z.number(),
+  description: z.string(),
+  metadata: z.record(z.any()).optional(),
+});
+
+export type AnalyticsStats = z.infer<typeof analyticsStatsSchema>;
+export type ActivityEvent = z.infer<typeof activityEventSchema>;
+
+// ============================================================================
+// VALIDATION SCHEMA
+// ============================================================================
+
+export const validationStageSchema = z.object({
+  stage: z.enum(['file-integrity', 'format-validation', 'ar-compatibility']),
+  status: z.enum(['pending', 'processing', 'passed', 'failed']),
+  message: z.string().optional(),
+});
+
+export type ValidationStage = z.infer<typeof validationStageSchema>;
+
+// ============================================================================
+// USER SCHEMA (Firebase Auth will handle most of this)
+// ============================================================================
+
+export const userProfileSchema = z.object({
+  uid: z.string(),
+  email: z.string().email(),
+  displayName: z.string().optional(),
+  photoURL: z.string().optional(),
+});
+
+export type UserProfile = z.infer<typeof userProfileSchema>;
