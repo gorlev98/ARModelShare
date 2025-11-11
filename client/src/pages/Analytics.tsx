@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { BarChart3, Box, Share2, Scan, Eye } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,14 +20,17 @@ interface AnalyticsProps {
   stats: AnalyticsStats;
   chartData?: Array<{ date: string; uploads: number; shares: number; views: number }>;
   recentEvents?: ActivityEvent[];
+  timePeriod: '7d' | '30d' | '90d';
+  onTimePeriodChange: (period: '7d' | '30d' | '90d') => void;
 }
 
 export default function Analytics({
   stats,
   chartData = [],
   recentEvents = [],
+  timePeriod,
+  onTimePeriodChange,
 }: AnalyticsProps) {
-  const [timePeriod, setTimePeriod] = useState<'7d' | '30d' | '90d'>('30d');
 
   const formatDate = (timestamp: number): string => {
     return new Date(timestamp).toLocaleDateString('en-US', {
@@ -92,7 +94,7 @@ export default function Analytics({
               <BarChart3 className="h-5 w-5" />
               Activity Over Time
             </CardTitle>
-            <Tabs value={timePeriod} onValueChange={(v) => setTimePeriod(v as any)}>
+            <Tabs value={timePeriod} onValueChange={(v) => onTimePeriodChange(v as '7d' | '30d' | '90d')}>
               <TabsList>
                 <TabsTrigger value="7d" data-testid="tab-7d">7 Days</TabsTrigger>
                 <TabsTrigger value="30d" data-testid="tab-30d">30 Days</TabsTrigger>
