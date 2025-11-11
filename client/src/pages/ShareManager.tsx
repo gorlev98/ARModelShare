@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { QRCodeSVG } from 'react-qr-code';
+import { QRCode } from 'react-qr-code';
 import { MoreVertical, ExternalLink, Copy, Download, XCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -105,7 +105,7 @@ export default function ShareManager({
                   <TableRow key={link.id} data-testid={`link-row-${link.id}`}>
                     <TableCell>
                       <div className="w-12 h-12 bg-white p-1 rounded border">
-                        <QRCodeSVG
+                        <QRCode
                           value={shareUrl}
                           size={40}
                           bgColor={link.qrOptions.bgColor}

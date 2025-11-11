@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { QRCodeSVG } from 'react-qr-code';
+import { QRCode } from 'react-qr-code';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -32,7 +32,7 @@ export function QRCodeGenerator({
     <div className="space-y-6">
       <div className="flex justify-center p-8 bg-card rounded-lg border border-card-border">
         <div ref={qrRef} className="bg-white p-4 rounded-lg" data-testid="qr-code">
-          <QRCodeSVG
+          <QRCode
             value={value}
             size={256}
             bgColor={options.bgColor}
