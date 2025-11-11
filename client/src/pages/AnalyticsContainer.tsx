@@ -6,16 +6,17 @@ import { analyticsService } from '@/services/analytics.service';
 export default function AnalyticsContainer() {
   const { user } = useAuth();
 
-  const { data: stats } = useQuery({
+  const defaultStats = {
+    totalModels: 0,
+    activeLinks: 0,
+    totalScans: 0,
+    totalViews: 0,
+  };
+
+  const { data: stats = defaultStats } = useQuery({
     queryKey: ['/api/analytics/stats', user?.uid],
     queryFn: () => analyticsService.getStats(user!.uid),
     enabled: !!user,
-    initialData: {
-      totalModels: 0,
-      activeLinks: 0,
-      totalScans: 0,
-      totalViews: 0,
-    },
   });
 
   const { data: chartData = [] } = useQuery({
@@ -32,7 +33,7 @@ export default function AnalyticsContainer() {
 
   return (
     <Analytics
-      stats={stats!}
+      stats={stats}
       chartData={chartData}
       recentEvents={recentEvents}
     />
