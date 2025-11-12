@@ -191,6 +191,16 @@ export const shareService = {
     return count || 0;
   },
 
+  // Inactivate all share links for a model
+  async inactivateModelLinks(modelId: string): Promise<void> {
+    const { error } = await supabase
+      .from('shared_links')
+      .update({ is_active: false })
+      .eq('model_id', modelId);
+
+    if (error) throw new Error(`Failed to inactivate model links: ${error.message}`);
+  },
+
   // Build share URL
   buildShareUrl(linkId: string): string {
     return `${window.location.origin}/ar?id=${linkId}`;

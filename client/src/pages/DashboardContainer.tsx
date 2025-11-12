@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import Dashboard from './Dashboard';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,14 +8,29 @@ import { analyticsService } from '@/services/analytics.service';
 import { profileService } from '@/services/profile.service';
 import { useShareLink } from '@/hooks/useShareLink';
 import { ShareModal } from '@/components/ShareModal';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useState } from 'react';
 import type { Model } from '@/types';
 
 export default function DashboardContainer() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [modelToDelete, setModelToDelete] = useState<Model | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { shareUrl, qrOptions, setQROptions, createShareLink, downloadQR } = useShareLink(user?.uid || '');
 
   // Fetch dashboard data
@@ -70,11 +85,53 @@ export default function DashboardContainer() {
     enabled: !!user,
   });
 
+  // Delete model mutation
+  const deleteModelMutation = useMutation({
+    mutationFn: async (modelId: string) => {
+      // Inactivate all related share links first
+      await shareService.inactivateModelLinks(modelId);
+      // Then delete the model (which also deletes storage files)
+      await modelService.deleteModel(modelId);
+    },
+    onSuccess: () => {
+      // Invalidate all related queries
+      queryClient.invalidateQueries({ queryKey: ['/api/models/recent'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shares/recent'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/analytics/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/storage/usage'] });
+
+      toast({
+        title: 'Model deleted',
+        description: 'Model and all related links have been removed.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Delete failed',
+        description: error.message || 'Failed to delete model',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handleShareModel = async (model: Model) => {
     setSelectedModel(model);
     const link = await createShareLink(model);
     if (link) {
       setShowShareModal(true);
+    }
+  };
+
+  const handleDeleteModel = (model: Model) => {
+    setModelToDelete(model);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (modelToDelete) {
+      await deleteModelMutation.mutateAsync(modelToDelete.id);
+      setShowDeleteDialog(false);
+      setModelToDelete(null);
     }
   };
 
@@ -100,6 +157,7 @@ export default function DashboardContainer() {
         recentLinks={recentLinks}
         recentActivity={recentActivity}
         onShareModel={handleShareModel}
+        onDeleteModel={handleDeleteModel}
         onUploadClick={() => setLocation('/upload')}
       />
       
@@ -115,6 +173,31 @@ export default function DashboardContainer() {
           userLogoUrl={userDetails?.userLogo}
         />
       )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Model</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{modelToDelete?.filename}"?
+              This will permanently remove the model and inactivate all related share links.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteModelMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleteModelMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteModelMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
