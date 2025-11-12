@@ -380,3 +380,53 @@ USING (
   bucket_id = 'logos'
   AND (storage.foldername(name))[1] = auth.uid()::text
 );
+
+-- ============================================================================
+-- NEW: Automatic Expiration Cleanup (Added: 2025-11-12)
+-- ============================================================================
+-- This section implements automatic deactivation of expired shared links
+-- using PostgreSQL's pg_cron extension for scheduled tasks.
+--
+-- Purpose: Automatically set is_active = false for links that have passed
+-- their expiration date, ensuring expired links are properly deactivated
+-- without manual intervention.
+--
+-- Schedule: Runs daily at 2:00 AM (configurable)
+
+-- Function to deactivate expired shared links
+-- Returns the number of links that were deactivated
+CREATE OR REPLACE FUNCTION deactivate_expired_links()
+RETURNS INTEGER AS $$
+DECLARE
+  affected_count INTEGER;
+BEGIN
+  -- Update all active links that have passed their expiration date
+  UPDATE shared_links
+  SET is_active = false
+  WHERE is_active = true
+    AND expires_at < EXTRACT(EPOCH FROM NOW()) * 1000;
+
+  -- Get the number of rows affected
+  GET DIAGNOSTICS affected_count = ROW_COUNT;
+
+  -- Return count for logging purposes
+  RETURN affected_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Enable pg_cron extension for scheduled tasks
+-- Note: This extension must be enabled by a superuser or through Supabase Dashboard
+-- If this fails, follow the manual setup instructions below
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+-- Schedule the cleanup job to run daily at 2:00 AM
+-- Cron format: 'minute hour day month weekday'
+-- Examples:
+--   '0 2 * * *'    = Daily at 2:00 AM
+--   '0 */6 * * *'  = Every 6 hours
+--   '0 * * * *'    = Every hour
+SELECT cron.schedule(
+  'deactivate-expired-links',           -- Job name
+  '0 2 * * *',                          -- Schedule: Daily at 2:00 AM
+  'SELECT deactivate_expired_links();'  -- SQL command to execute
+);
