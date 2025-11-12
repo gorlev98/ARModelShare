@@ -1,14 +1,12 @@
 import { LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import type { StatTrend } from '@/types';
 
 interface StatCardProps {
   title: string;
   value: string | number;
   icon: LucideIcon;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-  };
+  trend?: StatTrend;
   className?: string;
 }
 
@@ -23,8 +21,8 @@ export function StatCard({ title, value, icon: Icon, trend, className = '' }: St
               {value}
             </p>
             {trend && (
-              <p className={`text-xs ${trend.isPositive ? 'text-green-600' : 'text-destructive'}`}>
-                {trend.isPositive ? '+' : ''}{trend.value}% from last month
+              <p className={`text-xs ${trend.message ? 'text-muted-foreground' : trend.isPositive ? 'text-green-600' : 'text-destructive'}`}>
+                {trend.message ? trend.message : `${trend.isPositive ? '+' : '-'}${trend.value}% from last month`}
               </p>
             )}
           </div>

@@ -51,6 +51,9 @@ export default function DashboardContainer() {
         totalModels: analyticsStats.totalModels,
         activeLinks: analyticsStats.activeLinks,
         totalScans: analyticsStats.totalScans,
+        totalModelsTrend: analyticsStats.totalModelsTrend,
+        activeLinksTrend: analyticsStats.activeLinksTrend,
+        totalScansTrend: analyticsStats.totalScansTrend,
         storageUsed: storage,
       };
     },
@@ -74,7 +77,15 @@ export default function DashboardContainer() {
   return (
     <>
       <Dashboard
-        stats={stats || { totalModels: 0, activeLinks: 0, totalScans: 0, storageUsed: '0 MB' }}
+        stats={stats || {
+          totalModels: 0,
+          activeLinks: 0,
+          totalScans: 0,
+          storageUsed: '0 MB',
+          totalModelsTrend: undefined,
+          activeLinksTrend: undefined,
+          totalScansTrend: undefined,
+        }}
         recentModels={recentModels}
         recentLinks={recentLinks}
         recentActivity={recentActivity}

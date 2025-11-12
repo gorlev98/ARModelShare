@@ -53,19 +53,19 @@ export default function Dashboard({
           title="Total Models"
           value={stats.totalModels}
           icon={Box}
-          trend={{ value: 12, isPositive: true }}
+          trend={stats.totalModelsTrend}
         />
         <StatCard
           title="Active Links"
           value={stats.activeLinks}
           icon={Share2}
-          trend={{ value: 8, isPositive: true }}
+          trend={stats.activeLinksTrend}
         />
         <StatCard
           title="QR Scans"
           value={stats.totalScans}
           icon={Scan}
-          trend={{ value: 24, isPositive: true }}
+          trend={stats.totalScansTrend}
         />
         <StatCard
           title="Storage Used"

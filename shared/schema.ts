@@ -63,11 +63,33 @@ export type QROptions = z.infer<typeof qrOptionsSchema>;
 // ANALYTICS SCHEMA
 // ============================================================================
 
+export const statTrendSchema = z.object({
+  value: z.number(),
+  isPositive: z.boolean(),
+  message: z.string().optional(),
+});
+
 export const analyticsStatsSchema = z.object({
   totalModels: z.number(),
   activeLinks: z.number(),
   totalScans: z.number(),
   totalViews: z.number(),
+  totalModelsTrend: statTrendSchema.optional(),
+  activeLinksTrend: statTrendSchema.optional(),
+  totalScansTrend: statTrendSchema.optional(),
+  totalViewsTrend: statTrendSchema.optional(),
+});
+
+export const monthlyStatsSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  month: z.number(),
+  year: z.number(),
+  totalModels: z.number(),
+  activeLinks: z.number(),
+  totalScans: z.number(),
+  totalViews: z.number(),
+  createdAt: z.number(),
 });
 
 export const activityEventSchema = z.object({
@@ -78,7 +100,9 @@ export const activityEventSchema = z.object({
   metadata: z.record(z.any()).optional(),
 });
 
+export type StatTrend = z.infer<typeof statTrendSchema>;
 export type AnalyticsStats = z.infer<typeof analyticsStatsSchema>;
+export type MonthlyStats = z.infer<typeof monthlyStatsSchema>;
 export type ActivityEvent = z.infer<typeof activityEventSchema>;
 
 // ============================================================================

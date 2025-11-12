@@ -132,3 +132,76 @@ BEGIN
   WHERE id = link_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================================
+-- NEW: Monthly Stats Table for Trend Analysis (Added: 2025-11-11)
+-- ============================================================================
+
+-- Monthly Stats table
+-- Stores monthly snapshots of user statistics for month-over-month trend analysis
+CREATE TABLE IF NOT EXISTS monthly_stats (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  month INTEGER NOT NULL, -- Month number (1-12)
+  year INTEGER NOT NULL, -- Year (e.g., 2025)
+  total_models INTEGER NOT NULL DEFAULT 0,
+  active_links INTEGER NOT NULL DEFAULT 0,
+  total_scans INTEGER NOT NULL DEFAULT 0,
+  total_views INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, month, year)
+);
+
+-- Create indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_monthly_stats_user_id ON monthly_stats(user_id);
+CREATE INDEX IF NOT EXISTS idx_monthly_stats_year_month ON monthly_stats(year DESC, month DESC);
+CREATE INDEX IF NOT EXISTS idx_monthly_stats_user_year_month ON monthly_stats(user_id, year DESC, month DESC);
+
+-- Row Level Security (RLS) Policies
+ALTER TABLE monthly_stats ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own monthly stats
+CREATE POLICY "Users can view their own monthly stats"
+  ON monthly_stats FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- Users can insert their own monthly stats
+CREATE POLICY "Users can insert their own monthly stats"
+  ON monthly_stats FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own monthly stats
+CREATE POLICY "Users can update their own monthly stats"
+  ON monthly_stats FOR UPDATE
+  USING (auth.uid() = user_id);
+
+-- Users can delete their own monthly stats
+CREATE POLICY "Users can delete their own monthly stats"
+  ON monthly_stats FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Helper function to save or update monthly stats snapshot
+-- This function automatically saves the current month's stats or updates if they already exist
+CREATE OR REPLACE FUNCTION save_monthly_stats_snapshot(
+  p_user_id UUID,
+  p_total_models INTEGER,
+  p_active_links INTEGER,
+  p_total_scans INTEGER,
+  p_total_views INTEGER
+)
+RETURNS void AS $$
+DECLARE
+  current_month INTEGER := EXTRACT(MONTH FROM NOW());
+  current_year INTEGER := EXTRACT(YEAR FROM NOW());
+BEGIN
+  INSERT INTO monthly_stats (user_id, month, year, total_models, active_links, total_scans, total_views)
+  VALUES (p_user_id, current_month, current_year, p_total_models, p_active_links, p_total_scans, p_total_views)
+  ON CONFLICT (user_id, month, year)
+  DO UPDATE SET
+    total_models = EXCLUDED.total_models,
+    active_links = EXCLUDED.active_links,
+    total_scans = EXCLUDED.total_scans,
+    total_views = EXCLUDED.total_views,
+    created_at = NOW();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

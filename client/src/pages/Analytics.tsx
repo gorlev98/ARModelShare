@@ -65,25 +65,25 @@ export default function Analytics({
           title="Total Models"
           value={stats.totalModels}
           icon={Box}
-          trend={{ value: 15, isPositive: true }}
+          trend={stats.totalModelsTrend}
         />
         <StatCard
           title="Active Links"
           value={stats.activeLinks}
           icon={Share2}
-          trend={{ value: 10, isPositive: true }}
+          trend={stats.activeLinksTrend}
         />
         <StatCard
           title="Total Views"
           value={stats.totalViews}
           icon={Eye}
-          trend={{ value: 32, isPositive: true }}
+          trend={stats.totalViewsTrend}
         />
         <StatCard
           title="QR Scans"
           value={stats.totalScans}
           icon={Scan}
-          trend={{ value: 28, isPositive: true }}
+          trend={stats.totalScansTrend}
         />
       </div>
 
