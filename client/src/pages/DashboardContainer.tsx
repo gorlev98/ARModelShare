@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import Dashboard from './Dashboard';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,26 +8,62 @@ import { analyticsService } from '@/services/analytics.service';
 import { profileService } from '@/services/profile.service';
 import { useShareLink } from '@/hooks/useShareLink';
 import { ShareModal } from '@/components/ShareModal';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useState } from 'react';
 import type { Model } from '@/types';
 
 export default function DashboardContainer() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [modelToDelete, setModelToDelete] = useState<Model | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [modelsPage, setModelsPage] = useState(1);
+  const [linksPage, setLinksPage] = useState(1);
   const { shareUrl, qrOptions, setQROptions, createShareLink, downloadQR } = useShareLink(user?.uid || '');
 
-  // Fetch dashboard data
+  const modelsPerPage = 6;
+  const linksPerPage = 10;
+
+  // Fetch total counts for pagination
+  const { data: totalModelsCount = 0 } = useQuery({
+    queryKey: ['/api/models/count', user?.uid],
+    queryFn: () => modelService.countUserModels(user!.uid),
+    enabled: !!user,
+  });
+
+  const { data: totalLinksCount = 0 } = useQuery({
+    queryKey: ['/api/shares/count', user?.uid],
+    queryFn: async () => {
+      const links = await shareService.getUserShareLinks(user!.uid);
+      return links.length;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch dashboard data with pagination
   const { data: recentModels = [] } = useQuery({
-    queryKey: ['/api/models/recent', user?.uid],
-    queryFn: () => modelService.getRecentModels(user!.uid),
+    queryKey: ['/api/models/recent', user?.uid, modelsPage],
+    queryFn: () => modelService.getRecentModels(user!.uid, modelsPerPage, (modelsPage - 1) * modelsPerPage),
     enabled: !!user,
   });
 
   const { data: recentLinks = [] } = useQuery({
-    queryKey: ['/api/shares/recent', user?.uid],
-    queryFn: () => shareService.getRecentShareLinks(user!.uid),
+    queryKey: ['/api/shares/recent', user?.uid, linksPage],
+    queryFn: () => shareService.getRecentShareLinks(user!.uid, linksPerPage, (linksPage - 1) * linksPerPage),
     enabled: !!user,
   });
 
@@ -70,6 +106,35 @@ export default function DashboardContainer() {
     enabled: !!user,
   });
 
+  // Delete model mutation
+  const deleteModelMutation = useMutation({
+    mutationFn: async (modelId: string) => {
+      // Inactivate all related share links first
+      await shareService.inactivateModelLinks(modelId);
+      // Then delete the model (which also deletes storage files)
+      await modelService.deleteModel(modelId);
+    },
+    onSuccess: () => {
+      // Invalidate all related queries
+      queryClient.invalidateQueries({ queryKey: ['/api/models'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shares'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/analytics'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/storage'] });
+
+      toast({
+        title: 'Model deleted',
+        description: 'Model and all related links have been removed.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Delete failed',
+        description: error.message || 'Failed to delete model',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handleShareModel = async (model: Model) => {
     setSelectedModel(model);
     const link = await createShareLink(model);
@@ -78,11 +143,34 @@ export default function DashboardContainer() {
     }
   };
 
+  const handleDeleteModel = (model: Model) => {
+    setModelToDelete(model);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (modelToDelete) {
+      await deleteModelMutation.mutateAsync(modelToDelete.id);
+      setShowDeleteDialog(false);
+      setModelToDelete(null);
+      // Reset to first page if current page becomes empty
+      const totalModels = totalModelsCount - 1;
+      const maxPage = Math.ceil(totalModels / modelsPerPage);
+      if (modelsPage > maxPage && maxPage > 0) {
+        setModelsPage(maxPage);
+      }
+    }
+  };
+
   const handleDownloadQR = async () => {
     if (selectedModel) {
       await downloadQR(selectedModel.id, selectedModel.filename);
     }
   };
+
+  // Calculate total pages
+  const totalModelsPages = Math.ceil(totalModelsCount / modelsPerPage);
+  const totalLinksPages = Math.ceil(totalLinksCount / linksPerPage);
 
   return (
     <>
@@ -100,7 +188,14 @@ export default function DashboardContainer() {
         recentLinks={recentLinks}
         recentActivity={recentActivity}
         onShareModel={handleShareModel}
+        onDeleteModel={handleDeleteModel}
         onUploadClick={() => setLocation('/upload')}
+        modelsPage={modelsPage}
+        totalModelsPages={totalModelsPages}
+        onModelsPageChange={setModelsPage}
+        linksPage={linksPage}
+        totalLinksPages={totalLinksPages}
+        onLinksPageChange={setLinksPage}
       />
       
       {selectedModel && (
@@ -115,6 +210,31 @@ export default function DashboardContainer() {
           userLogoUrl={userDetails?.userLogo}
         />
       )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Model</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{modelToDelete?.filename}"?
+              This will permanently remove the model and inactivate all related share links.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteModelMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleteModelMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteModelMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

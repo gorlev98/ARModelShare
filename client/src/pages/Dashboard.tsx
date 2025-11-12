@@ -3,6 +3,14 @@ import { StatCard } from '@/components/StatCard';
 import { ModelCard } from '@/components/ModelCard';
 import { ActivityTimeline } from '@/components/ActivityTimeline';
 import { Button } from '@/components/ui/button';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import type { Model, SharedLink, ActivityEvent } from '@/types';
 
 interface DashboardProps {
@@ -19,6 +27,12 @@ interface DashboardProps {
   onViewModel?: (model: Model) => void;
   onDeleteModel?: (model: Model) => void;
   onUploadClick?: () => void;
+  modelsPage?: number;
+  totalModelsPages?: number;
+  onModelsPageChange?: (page: number) => void;
+  linksPage?: number;
+  totalLinksPages?: number;
+  onLinksPageChange?: (page: number) => void;
 }
 
 export default function Dashboard({
@@ -30,6 +44,12 @@ export default function Dashboard({
   onViewModel,
   onDeleteModel,
   onUploadClick,
+  modelsPage = 1,
+  totalModelsPages = 1,
+  onModelsPageChange,
+  linksPage = 1,
+  totalLinksPages = 1,
+  onLinksPageChange,
 }: DashboardProps) {
   return (
     <div className="space-y-8">
@@ -89,17 +109,53 @@ export default function Dashboard({
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {recentModels.map((model) => (
-                  <ModelCard
-                    key={model.id}
-                    model={model}
-                    onShare={onShareModel}
-                    onView={onViewModel}
-                    onDelete={onDeleteModel}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {recentModels.map((model) => (
+                    <ModelCard
+                      key={model.id}
+                      model={model}
+                      onShare={onShareModel}
+                      onView={onViewModel}
+                      onDelete={onDeleteModel}
+                    />
+                  ))}
+                </div>
+
+                {totalModelsPages > 1 && onModelsPageChange && (
+                  <div className="mt-6">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => modelsPage > 1 && onModelsPageChange(modelsPage - 1)}
+                            className={modelsPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+
+                        {Array.from({ length: totalModelsPages }, (_, i) => i + 1).map((page) => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              onClick={() => onModelsPageChange(page)}
+                              isActive={page === modelsPage}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => modelsPage < totalModelsPages && onModelsPageChange(modelsPage + 1)}
+                            className={modelsPage >= totalModelsPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -110,24 +166,60 @@ export default function Dashboard({
                 <p className="text-sm text-muted-foreground">No shared links yet</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {recentLinks.slice(0, 3).map((link) => (
-                  <div
-                    key={link.id}
-                    className="p-4 bg-card rounded-lg border border-card-border flex items-center justify-between hover-elevate"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{link.modelName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {link.scans} scans · {link.views} views
-                      </p>
+              <>
+                <div className="space-y-3">
+                  {recentLinks.map((link) => (
+                    <div
+                      key={link.id}
+                      className="p-4 bg-card rounded-lg border border-card-border flex items-center justify-between hover-elevate"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{link.modelName}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {link.scans} scans · {link.views} views
+                        </p>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {link.isActive ? 'Active' : 'Expired'}
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {link.isActive ? 'Active' : 'Expired'}
-                    </div>
+                  ))}
+                </div>
+
+                {totalLinksPages > 1 && onLinksPageChange && (
+                  <div className="mt-6">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => linksPage > 1 && onLinksPageChange(linksPage - 1)}
+                            className={linksPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+
+                        {Array.from({ length: totalLinksPages }, (_, i) => i + 1).map((page) => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              onClick={() => onLinksPageChange(page)}
+                              isActive={page === linksPage}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => linksPage < totalLinksPages && onLinksPageChange(linksPage + 1)}
+                            className={linksPage >= totalLinksPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>

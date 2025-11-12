@@ -26,11 +26,11 @@ export function FileUploader({
 
   const validateFile = (file: File): string | null => {
     const maxSize = 100 * 1024 * 1024; // 100MB
-    const allowedTypes = ['.glb', '.gltf'];
+    const allowedTypes = ['.glb', '.gltf', '.zip'];
     const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
 
     if (!allowedTypes.includes(extension)) {
-      return 'Only .glb and .gltf files are supported';
+      return 'Only .glb, .gltf, and .zip files are supported';
     }
 
     if (file.size > maxSize) {
@@ -135,7 +135,7 @@ export function FileUploader({
           <p className="text-sm text-muted-foreground mb-4 max-w-md">
             {selectedFile && !error
               ? selectedFile.name
-              : 'Drag and drop your .glb or .gltf file here, or click to browse'}
+              : 'Drag and drop your .glb, .gltf, or .zip file here, or click to browse'}
           </p>
 
           {error && (
@@ -148,7 +148,7 @@ export function FileUploader({
             <div>
               <input
                 type="file"
-                accept=".glb,.gltf"
+                accept=".glb,.gltf,.zip"
                 onChange={handleChange}
                 className="hidden"
                 id="file-upload"

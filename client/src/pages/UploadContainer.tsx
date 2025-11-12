@@ -39,7 +39,8 @@ export default function UploadContainer() {
     const link = await createShareLink(model);
     if (link) {
       setShowShareModal(true);
-      queryClient.invalidateQueries({ queryKey: ['/api/shares/recent'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shares'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/analytics'] });
     }
   };
 

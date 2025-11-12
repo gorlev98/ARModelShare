@@ -97,8 +97,12 @@ export const shareService = {
     }));
   },
 
-  // Get recent shared links for a user
-  async getRecentShareLinks(userId: string, limitCount: number = 3): Promise<SharedLink[]> {
+  // Get recent shared links for a user with pagination
+  async getRecentShareLinks(
+    userId: string,
+    limitCount: number = 10,
+    offset: number = 0
+  ): Promise<SharedLink[]> {
     const { data, error } = await supabase
       .from('shared_links')
       .select(`
@@ -107,7 +111,7 @@ export const shareService = {
       `)
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .limit(limitCount);
+      .range(offset, offset + limitCount - 1);
 
     if (error) throw new Error(`Failed to get recent share links: ${error.message}`);
 
@@ -149,7 +153,14 @@ export const shareService = {
 
   // Extend expiration
   async extendExpiration(id: string, days: number = 30): Promise<void> {
-    const newExpiration = Date.now() + (days * 24 * 60 * 60 * 1000);
+    // Get the current link to access its existing expiration date
+    const link = await this.getShareLink(id);
+    if (!link) {
+      throw new Error('Share link not found');
+    }
+
+    // Add days to the EXISTING expiration date, not to NOW
+    const newExpiration = link.expiresAt + (days * 24 * 60 * 60 * 1000);
     await this.updateShareLink(id, { expiresAt: newExpiration });
   },
 
@@ -189,6 +200,16 @@ export const shareService = {
 
     if (error) throw new Error(`Failed to count active links: ${error.message}`);
     return count || 0;
+  },
+
+  // Inactivate all share links for a model
+  async inactivateModelLinks(modelId: string): Promise<void> {
+    const { error } = await supabase
+      .from('shared_links')
+      .update({ is_active: false })
+      .eq('model_id', modelId);
+
+    if (error) throw new Error(`Failed to inactivate model links: ${error.message}`);
   },
 
   // Build share URL

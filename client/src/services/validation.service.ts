@@ -1,3 +1,4 @@
+import JSZip from 'jszip';
 import type { ValidationStage } from '@/types';
 
 export const validationService = {
@@ -31,6 +32,32 @@ export const validationService = {
     if (extension === '.glb' || extension === '.gltf') {
       stages[1].status = 'passed';
       stages[1].message = `Valid ${extension.toUpperCase()} format detected`;
+    } else if (extension === '.zip') {
+      // Validate ZIP structure
+      try {
+        const zip = await JSZip.loadAsync(file);
+        const files = Object.keys(zip.files);
+
+        // Check for GLTF file
+        const hasGltf = files.some(f => f.toLowerCase().endsWith('.gltf'));
+
+        if (!hasGltf) {
+          stages[1].status = 'failed';
+          stages[1].message = 'ZIP must contain a .gltf file';
+          issues.push('No .gltf file found in ZIP archive');
+          onStageUpdate?.(stages);
+          return { status: 'error', issues };
+        }
+
+        stages[1].status = 'passed';
+        stages[1].message = `Valid ZIP archive with GLTF model (${files.length} files)`;
+      } catch (error) {
+        stages[1].status = 'failed';
+        stages[1].message = 'Invalid ZIP file';
+        issues.push('Failed to read ZIP archive');
+        onStageUpdate?.(stages);
+        return { status: 'error', issues };
+      }
     } else {
       stages[1].status = 'failed';
       stages[1].message = 'Unsupported file format';
