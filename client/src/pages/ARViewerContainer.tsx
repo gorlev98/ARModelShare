@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { useLocation, useSearch } from 'wouter';
 import ARViewer from './ARViewer';
 import { shareService } from '@/services/share.service';
+import { analyticsService } from '@/services/analytics.service';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ARViewerContainer() {
@@ -17,10 +18,28 @@ export default function ARViewerContainer() {
     const incrementCounts = async () => {
       if (linkId) {
         try {
-          if (source === 'qr') {
-            await shareService.incrementScans(linkId);
-          } else {
-            await shareService.incrementViews(linkId);
+          // Get link details to access userId and modelName
+          const link = await shareService.getShareLink(linkId);
+
+          if (link) {
+            const isQRScan = source === 'qr';
+
+            // Increment counter
+            if (isQRScan) {
+              await shareService.incrementScans(linkId);
+            } else {
+              await shareService.incrementViews(linkId);
+            }
+
+            // Log activity event for the chart
+            await analyticsService.logActivity(
+              link.userId,
+              isQRScan ? 'scan' : 'view',
+              isQRScan
+                ? `QR code scanned for "${link.modelName}"`
+                : `Model viewed: "${link.modelName}"`,
+              { linkId, modelId: link.modelId }
+            );
           }
         } catch (error) {
           console.error('Failed to increment counts:', error);
