@@ -299,3 +299,84 @@ CREATE POLICY "Users can update their own logos"
 CREATE POLICY "Users can delete their own logos"
   ON user_logos FOR DELETE
   USING (auth.uid() = user_id);
+
+-- ============================================================================
+-- STORAGE BUCKET POLICIES
+-- ============================================================================
+-- These policies control access to files in storage buckets
+-- Note: Storage buckets must be created manually in the Supabase Dashboard
+-- before running these policies (see SUPABASE_SETUP.md for instructions)
+
+-- Storage policies for 'models' bucket
+-- Allows authenticated users to upload, update, and delete their own files
+-- Allows public read access for AR viewing
+
+-- Public can read all models
+CREATE POLICY "Public read access to models"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'models');
+
+-- Authenticated users can upload to their folder
+CREATE POLICY "Authenticated users can upload models"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'models'
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- Users can update their own files
+CREATE POLICY "Users can update their own models"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (
+  bucket_id = 'models'
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- Users can delete their own files
+CREATE POLICY "Users can delete their own models"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (
+  bucket_id = 'models'
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- Storage policies for 'logos' bucket
+-- Allows authenticated users to upload, update, and delete their own logos
+-- Allows public read access for QR code embedding
+
+-- Public can read all logos
+CREATE POLICY "Public read access to logos"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'logos');
+
+-- Authenticated users can upload logos to their folder
+CREATE POLICY "Authenticated users can upload logos"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'logos'
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- Users can update their own logos
+CREATE POLICY "Users can update their own logos"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (
+  bucket_id = 'logos'
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
+
+-- Users can delete their own logos
+CREATE POLICY "Users can delete their own logos"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (
+  bucket_id = 'logos'
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
