@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { uploadService } from './upload.service';
 import type { Model, InsertModel } from '@/types';
 
 export const modelService = {
@@ -121,12 +122,29 @@ export const modelService = {
 
   // Delete model
   async deleteModel(id: string): Promise<void> {
+    // First, get the model to retrieve the storage URL
+    const model = await this.getModel(id);
+
+    if (!model) {
+      throw new Error('Model not found');
+    }
+
+    // Delete from database first
     const { error } = await supabase
       .from('models')
       .delete()
       .eq('id', id);
 
     if (error) throw new Error(`Failed to delete model: ${error.message}`);
+
+    // Then delete storage files
+    try {
+      await uploadService.deleteModelFiles(model.modelUrl);
+    } catch (error: any) {
+      console.error('Failed to delete storage files:', error);
+      // Don't throw here - the database record is already deleted
+      // Just log the error
+    }
   },
 
   // Count user models
