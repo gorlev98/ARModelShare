@@ -9,6 +9,8 @@ export type {
   ActivityEvent,
   ValidationStage,
   UserProfile,
+  UserDetails,
+  UpdateUserDetails,
 } from '@shared/schema';
 
 // Additional frontend-only types

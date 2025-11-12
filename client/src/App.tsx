@@ -15,6 +15,7 @@ import DashboardContainer from "@/pages/DashboardContainer";
 import UploadContainer from "@/pages/UploadContainer";
 import ShareManagerContainer from "@/pages/ShareManagerContainer";
 import AnalyticsContainer from "@/pages/AnalyticsContainer";
+import ProfileContainer from "@/pages/ProfileContainer";
 import ARViewerContainer from "@/pages/ARViewerContainer";
 import NotFound from "@/pages/not-found";
 
@@ -111,6 +112,16 @@ function Router() {
         {() => user ? (
           <AuthenticatedLayout>
             <AnalyticsContainer />
+          </AuthenticatedLayout>
+        ) : (
+          <Redirect to="/login" />
+        )}
+      </Route>
+
+      <Route path="/profile">
+        {() => user ? (
+          <AuthenticatedLayout>
+            <ProfileContainer />
           </AuthenticatedLayout>
         ) : (
           <Redirect to="/login" />

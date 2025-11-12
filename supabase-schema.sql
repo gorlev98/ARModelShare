@@ -205,3 +205,56 @@ BEGIN
     created_at = NOW();
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================================
+-- NEW: User Details Table for Extended Profile Information (Added: 2025-11-12)
+-- ============================================================================
+
+-- User Details table
+-- Stores extended user profile information including custom display name, phone, and logo
+CREATE TABLE IF NOT EXISTS user_details (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  display_name TEXT,
+  phone TEXT,
+  user_logo TEXT, -- URL to the user's logo/avatar in storage
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Row Level Security (RLS) Policies
+ALTER TABLE user_details ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own details
+CREATE POLICY "Users can view their own details"
+  ON user_details FOR SELECT
+  USING (auth.uid() = id);
+
+-- Users can insert their own details
+CREATE POLICY "Users can insert their own details"
+  ON user_details FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+-- Users can update their own details
+CREATE POLICY "Users can update their own details"
+  ON user_details FOR UPDATE
+  USING (auth.uid() = id);
+
+-- Users can delete their own details
+CREATE POLICY "Users can delete their own details"
+  ON user_details FOR DELETE
+  USING (auth.uid() = id);
+
+-- Function to automatically update the updated_at timestamp
+CREATE OR REPLACE FUNCTION update_user_details_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to call the function before update
+CREATE TRIGGER trigger_update_user_details_updated_at
+  BEFORE UPDATE ON user_details
+  FOR EACH ROW
+  EXECUTE FUNCTION update_user_details_updated_at();

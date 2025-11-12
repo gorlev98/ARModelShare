@@ -1,5 +1,6 @@
-import { LayoutDashboard, Upload, Share2, BarChart3, LogOut, Box } from 'lucide-react';
+import { LayoutDashboard, Upload, Share2, BarChart3, LogOut, Box, User } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import type { UserProfile } from '@/types';
+import { profileService } from '@/services/profile.service';
 
 interface AppSidebarProps {
   user?: UserProfile | null;
@@ -42,10 +44,22 @@ const menuItems = [
     url: '/analytics',
     icon: BarChart3,
   },
+  {
+    title: 'Profile',
+    url: '/profile',
+    icon: User,
+  },
 ];
 
 export function AppSidebar({ user, onSignOut }: AppSidebarProps) {
   const [location] = useLocation();
+
+  // Fetch user details for extended profile information
+  const { data: userDetails, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ['/api/user-details', user?.uid],
+    queryFn: () => profileService.getUserDetails(user!.uid),
+    enabled: !!user,
+  });
 
   const getInitials = (name?: string, email?: string): string => {
     if (name) {
@@ -59,6 +73,20 @@ export function AppSidebar({ user, onSignOut }: AppSidebarProps) {
     }
     return 'U';
   };
+
+  // Determine display values (prefer user_details over user profile)
+  // While loading details, use existing user data; only show 'User' if nothing is available after loading
+  let displayName = 'User';
+  if (userDetails?.displayName) {
+    displayName = userDetails.displayName;
+  } else if (user?.displayName) {
+    displayName = user.displayName;
+  } else if (isLoadingDetails && user?.email) {
+    // While loading, don't show 'User', wait for data or use email as fallback
+    displayName = user.email.split('@')[0];
+  }
+
+  const avatarUrl = userDetails?.userLogo || user?.photoURL;
 
   return (
     <Sidebar>
@@ -103,14 +131,14 @@ export function AppSidebar({ user, onSignOut }: AppSidebarProps) {
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <Avatar className="h-9 w-9">
-                <AvatarImage src={user.photoURL} alt={user.displayName || user.email} />
+                <AvatarImage src={avatarUrl} alt={displayName} />
                 <AvatarFallback>
-                  {getInitials(user.displayName, user.email)}
+                  {getInitials(displayName, user.email)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">
-                  {user.displayName || 'User'}
+                  {displayName}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
                   {user.email}

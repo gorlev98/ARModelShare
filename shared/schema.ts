@@ -129,3 +129,25 @@ export const userProfileSchema = z.object({
 });
 
 export type UserProfile = z.infer<typeof userProfileSchema>;
+
+// ============================================================================
+// USER DETAILS SCHEMA - Extended profile information
+// ============================================================================
+
+export const userDetailsSchema = z.object({
+  id: z.string(),
+  displayName: z.string().optional(),
+  phone: z.string().optional(),
+  userLogo: z.string().optional(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+
+export const updateUserDetailsSchema = userDetailsSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type UserDetails = z.infer<typeof userDetailsSchema>;
+export type UpdateUserDetails = z.infer<typeof updateUserDetailsSchema>;
