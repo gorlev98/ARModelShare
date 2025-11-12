@@ -80,14 +80,18 @@ export const modelService = {
     }));
   },
 
-  // Get recent models for a user
-  async getRecentModels(userId: string, limitCount: number = 6): Promise<Model[]> {
+  // Get recent models for a user with pagination
+  async getRecentModels(
+    userId: string,
+    limitCount: number = 6,
+    offset: number = 0
+  ): Promise<Model[]> {
     const { data, error } = await supabase
       .from('models')
       .select('*')
       .eq('user_id', userId)
       .order('uploaded_at', { ascending: false })
-      .limit(limitCount);
+      .range(offset, offset + limitCount - 1);
 
     if (error) throw new Error(`Failed to get recent models: ${error.message}`);
 

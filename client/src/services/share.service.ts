@@ -97,8 +97,12 @@ export const shareService = {
     }));
   },
 
-  // Get recent shared links for a user
-  async getRecentShareLinks(userId: string, limitCount: number = 3): Promise<SharedLink[]> {
+  // Get recent shared links for a user with pagination
+  async getRecentShareLinks(
+    userId: string,
+    limitCount: number = 10,
+    offset: number = 0
+  ): Promise<SharedLink[]> {
     const { data, error } = await supabase
       .from('shared_links')
       .select(`
@@ -107,7 +111,7 @@ export const shareService = {
       `)
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .limit(limitCount);
+      .range(offset, offset + limitCount - 1);
 
     if (error) throw new Error(`Failed to get recent share links: ${error.message}`);
 

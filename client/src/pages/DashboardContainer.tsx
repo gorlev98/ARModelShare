@@ -31,18 +31,39 @@ export default function DashboardContainer() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [modelToDelete, setModelToDelete] = useState<Model | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [modelsPage, setModelsPage] = useState(1);
+  const [linksPage, setLinksPage] = useState(1);
   const { shareUrl, qrOptions, setQROptions, createShareLink, downloadQR } = useShareLink(user?.uid || '');
 
-  // Fetch dashboard data
+  const modelsPerPage = 6;
+  const linksPerPage = 10;
+
+  // Fetch total counts for pagination
+  const { data: totalModelsCount = 0 } = useQuery({
+    queryKey: ['/api/models/count', user?.uid],
+    queryFn: () => modelService.countUserModels(user!.uid),
+    enabled: !!user,
+  });
+
+  const { data: totalLinksCount = 0 } = useQuery({
+    queryKey: ['/api/shares/count', user?.uid],
+    queryFn: async () => {
+      const links = await shareService.getUserShareLinks(user!.uid);
+      return links.length;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch dashboard data with pagination
   const { data: recentModels = [] } = useQuery({
-    queryKey: ['/api/models/recent', user?.uid],
-    queryFn: () => modelService.getRecentModels(user!.uid),
+    queryKey: ['/api/models/recent', user?.uid, modelsPage],
+    queryFn: () => modelService.getRecentModels(user!.uid, modelsPerPage, (modelsPage - 1) * modelsPerPage),
     enabled: !!user,
   });
 
   const { data: recentLinks = [] } = useQuery({
-    queryKey: ['/api/shares/recent', user?.uid],
-    queryFn: () => shareService.getRecentShareLinks(user!.uid),
+    queryKey: ['/api/shares/recent', user?.uid, linksPage],
+    queryFn: () => shareService.getRecentShareLinks(user!.uid, linksPerPage, (linksPage - 1) * linksPerPage),
     enabled: !!user,
   });
 
@@ -132,6 +153,12 @@ export default function DashboardContainer() {
       await deleteModelMutation.mutateAsync(modelToDelete.id);
       setShowDeleteDialog(false);
       setModelToDelete(null);
+      // Reset to first page if current page becomes empty
+      const totalModels = totalModelsCount - 1;
+      const maxPage = Math.ceil(totalModels / modelsPerPage);
+      if (modelsPage > maxPage && maxPage > 0) {
+        setModelsPage(maxPage);
+      }
     }
   };
 
@@ -140,6 +167,10 @@ export default function DashboardContainer() {
       await downloadQR(selectedModel.id, selectedModel.filename);
     }
   };
+
+  // Calculate total pages
+  const totalModelsPages = Math.ceil(totalModelsCount / modelsPerPage);
+  const totalLinksPages = Math.ceil(totalLinksCount / linksPerPage);
 
   return (
     <>
@@ -159,6 +190,12 @@ export default function DashboardContainer() {
         onShareModel={handleShareModel}
         onDeleteModel={handleDeleteModel}
         onUploadClick={() => setLocation('/upload')}
+        modelsPage={modelsPage}
+        totalModelsPages={totalModelsPages}
+        onModelsPageChange={setModelsPage}
+        linksPage={linksPage}
+        totalLinksPages={totalLinksPages}
+        onLinksPageChange={setLinksPage}
       />
       
       {selectedModel && (
