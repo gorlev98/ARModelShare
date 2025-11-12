@@ -11,6 +11,8 @@ export type {
   UserProfile,
   UserDetails,
   UpdateUserDetails,
+  UserLogo,
+  InsertUserLogo,
 } from '@shared/schema';
 
 // Additional frontend-only types

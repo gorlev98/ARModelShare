@@ -258,3 +258,44 @@ CREATE TRIGGER trigger_update_user_details_updated_at
   BEFORE UPDATE ON user_details
   FOR EACH ROW
   EXECUTE FUNCTION update_user_details_updated_at();
+
+-- ============================================================================
+-- NEW: User Logos Table for QR Code Logo Collection (Added: 2025-11-12)
+-- ============================================================================
+
+-- User Logos table
+-- Stores user's logo collection that can be embedded in QR codes
+CREATE TABLE IF NOT EXISTS user_logos (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  logo_url TEXT NOT NULL, -- URL to the logo file in storage
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index for better query performance
+CREATE INDEX IF NOT EXISTS idx_user_logos_user_id ON user_logos(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_logos_created_at ON user_logos(created_at DESC);
+
+-- Row Level Security (RLS) Policies
+ALTER TABLE user_logos ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own logos
+CREATE POLICY "Users can view their own logos"
+  ON user_logos FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- Users can insert their own logos
+CREATE POLICY "Users can insert their own logos"
+  ON user_logos FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own logos
+CREATE POLICY "Users can update their own logos"
+  ON user_logos FOR UPDATE
+  USING (auth.uid() = user_id);
+
+-- Users can delete their own logos
+CREATE POLICY "Users can delete their own logos"
+  ON user_logos FOR DELETE
+  USING (auth.uid() = user_id);

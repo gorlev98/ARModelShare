@@ -30,6 +30,9 @@ export const qrService = {
       fgColor: '#000000',
       bgColor: '#ffffff',
       level: 'M',
+      logoUrl: undefined,
+      logoSize: 20,
+      includeLogo: false,
     };
   },
 

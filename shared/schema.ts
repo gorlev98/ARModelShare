@@ -32,6 +32,8 @@ export const qrOptionsSchema = z.object({
   bgColor: z.string().default('#ffffff'),
   level: z.enum(['L', 'M', 'Q', 'H']).default('M'),
   logoUrl: z.string().optional(),
+  logoSize: z.number().min(10).max(30).default(20), // Logo size as percentage of QR code (10-30%)
+  includeLogo: z.boolean().default(false),
 });
 
 export const sharedLinkSchema = z.object({
@@ -151,3 +153,23 @@ export const updateUserDetailsSchema = userDetailsSchema.omit({
 
 export type UserDetails = z.infer<typeof userDetailsSchema>;
 export type UpdateUserDetails = z.infer<typeof updateUserDetailsSchema>;
+
+// ============================================================================
+// USER LOGOS SCHEMA - For QR code logo collection
+// ============================================================================
+
+export const userLogoSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  name: z.string(),
+  logoUrl: z.string(),
+  createdAt: z.number(),
+});
+
+export const insertUserLogoSchema = userLogoSchema.omit({
+  id: true,
+  createdAt: true,
+});
+
+export type UserLogo = z.infer<typeof userLogoSchema>;
+export type InsertUserLogo = z.infer<typeof insertUserLogoSchema>;

@@ -101,6 +101,7 @@ export default function DashboardContainer() {
           qrOptions={qrOptions}
           onQROptionsChange={setQROptions}
           onDownloadQR={handleDownloadQR}
+          userId={user?.uid}
         />
       )}
     </>

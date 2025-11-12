@@ -22,6 +22,7 @@ interface ShareModalProps {
   qrOptions: QROptions;
   onQROptionsChange: (options: QROptions) => void;
   onDownloadQR: () => void;
+  userId?: string;
 }
 
 export function ShareModal({
@@ -31,6 +32,7 @@ export function ShareModal({
   qrOptions,
   onQROptionsChange,
   onDownloadQR,
+  userId,
 }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
@@ -107,6 +109,7 @@ export function ShareModal({
               options={qrOptions}
               onOptionsChange={onQROptionsChange}
               onDownload={onDownloadQR}
+              userId={userId}
             />
           </TabsContent>
 

@@ -61,6 +61,7 @@ export default function UploadContainer() {
           qrOptions={qrOptions}
           onQROptionsChange={setQROptions}
           onDownloadQR={handleDownloadQR}
+          userId={user?.uid}
         />
       )}
     </>
