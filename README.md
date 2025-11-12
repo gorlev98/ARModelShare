@@ -14,11 +14,13 @@ For detailed setup instructions, see **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)*
 ### Quick Start
 
 1. Create a Supabase project at [app.supabase.com](https://app.supabase.com/)
-2. Run the SQL schema from `supabase-schema.sql` in the SQL Editor
-3. Create a storage bucket named `models` (public)
+2. Create two public storage buckets: `models` and `logos`
+3. Run the complete SQL schema from `supabase-schema.sql` in the SQL Editor
 4. Enable Email/Password authentication
 5. Copy your Project URL and anon key from Project Settings > API
 6. Update `client/.env.local` with your Supabase credentials
+
+**Note**: The `supabase-schema.sql` file contains all database tables, RLS policies, and storage policies in one place.
 
 ## Installation
 
@@ -87,20 +89,39 @@ npm run check
 
 Runs TypeScript compiler in check mode without emitting files.
 
-## Database Setup
+## Database and Storage Setup
 
 This project uses Supabase as a Backend-as-a-Service (BaaS):
 
 - **PostgreSQL Database**: Relational database with Row Level Security
-- **Storage**: File storage for 3D models
+- **Storage**: File storage for 3D models and logos
 - **Auth**: User authentication with email/password and OAuth
 
-Database tables (created by running `supabase-schema.sql`):
-- `models` - Uploaded 3D models
-- `shared_links` - Shareable links with QR codes
-- `activity` - Analytics and activity logs
+### Database Tables
 
-All tables have Row Level Security (RLS) policies to ensure users can only access their own data.
+The `supabase-schema.sql` file creates all necessary database tables:
+- `models` - Uploaded 3D models with validation status
+- `shared_links` - Shareable links with QR codes, views, and scans
+- `activity` - Analytics and activity logs for charts
+- `monthly_stats` - Monthly statistics snapshots for trend analysis
+- `user_details` - Extended user profile information (display name, phone, logo)
+- `user_logos` - User's logo collection for QR code embedding
+
+### Storage Buckets
+
+Two public storage buckets are required:
+- **models** - Stores uploaded 3D model files (.glb, .gltf)
+- **logos** - Stores user profile logos and QR code logos
+
+### Security
+
+The consolidated `supabase-schema.sql` includes:
+- **Row Level Security (RLS)** policies for all tables
+- **Storage policies** for both buckets
+- User isolation (users can only access their own data)
+- Public read access for shared models and QR codes
+
+For complete setup instructions, see **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)**
 
 ## Project Structure
 
@@ -138,9 +159,10 @@ All tables have Row Level Security (RLS) policies to ensure users can only acces
 
 ### File Upload Fails
 
-- Verify `models` storage bucket exists and is public
-- Check storage policies are configured correctly
-- Ensure file is `.glb` or `.gltf` format and under 100MB
+- Verify both `models` and `logos` storage buckets exist and are public
+- Check storage policies are configured correctly (run `supabase-schema.sql`)
+- Ensure model file is `.glb` or `.gltf` format and under 100MB
+- Ensure logo file is a valid image (PNG, JPG) and under 5MB
 - Verify you're authenticated before uploading
 
 ### Database Query Errors
@@ -169,11 +191,15 @@ taskkill /PID <PID> /F
 ## Features
 
 - User authentication (Email/Password + Google OAuth)
+- User profile management (display name, phone, profile logo)
 - 3D model upload (.glb/.gltf, max 100MB)
 - Interactive 3D preview with orbit controls
 - AR viewing (WebXR, AR Quick Look, Scene Viewer)
 - Shareable links with customizable QR codes
-- Analytics dashboard with charts
+- QR code customization (colors, error correction, logo embedding)
+- Logo collection management for QR codes
+- Analytics dashboard with charts and activity tracking
+- Monthly statistics with trend analysis
 - Dark mode support
 - Responsive mobile-first design
 
@@ -183,7 +209,7 @@ taskkill /PID <PID> /F
 
 **Backend**: Express.js, Supabase (Auth, PostgreSQL, Storage)
 
-**Key Libraries**: react-qr-code, html2canvas, recharts, framer-motion
+**Key Libraries**: qrcode (canvas-based QR generation), recharts (analytics charts), html2canvas, framer-motion
 
 ## License
 
