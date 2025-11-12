@@ -21,7 +21,10 @@ export default function ShareManagerContainer() {
   const handleExtend = async (link: SharedLink) => {
     try {
       await shareService.extendExpiration(link.id, 30);
+      // Invalidate all share-related queries
       queryClient.invalidateQueries({ queryKey: ['/api/shares'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shares/recent'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shares/count'] });
       toast({
         title: 'Link extended',
         description: 'Expiration date extended by 30 days',
@@ -38,7 +41,11 @@ export default function ShareManagerContainer() {
   const handleRevoke = async (link: SharedLink) => {
     try {
       await shareService.revokeShareLink(link.id);
+      // Invalidate all share-related queries
       queryClient.invalidateQueries({ queryKey: ['/api/shares'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shares/recent'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shares/count'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/analytics/stats'] });
       toast({
         title: 'Link revoked',
         description: 'Share link has been deactivated',

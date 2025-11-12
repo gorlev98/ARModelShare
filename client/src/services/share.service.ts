@@ -153,7 +153,14 @@ export const shareService = {
 
   // Extend expiration
   async extendExpiration(id: string, days: number = 30): Promise<void> {
-    const newExpiration = Date.now() + (days * 24 * 60 * 60 * 1000);
+    // Get the current link to access its existing expiration date
+    const link = await this.getShareLink(id);
+    if (!link) {
+      throw new Error('Share link not found');
+    }
+
+    // Add days to the EXISTING expiration date, not to NOW
+    const newExpiration = link.expiresAt + (days * 24 * 60 * 60 * 1000);
     await this.updateShareLink(id, { expiresAt: newExpiration });
   },
 

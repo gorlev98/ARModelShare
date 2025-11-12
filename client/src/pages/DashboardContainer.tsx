@@ -116,10 +116,10 @@ export default function DashboardContainer() {
     },
     onSuccess: () => {
       // Invalidate all related queries
-      queryClient.invalidateQueries({ queryKey: ['/api/models/recent'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/shares/recent'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/analytics/stats'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/storage/usage'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/models'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/shares'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/analytics'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/storage'] });
 
       toast({
         title: 'Model deleted',
