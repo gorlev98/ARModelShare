@@ -52,9 +52,11 @@ export default function DashboardContainer() {
         totalModels: analyticsStats.totalModels,
         activeLinks: analyticsStats.activeLinks,
         totalScans: analyticsStats.totalScans,
+        totalViews: analyticsStats.totalViews,
         totalModelsTrend: analyticsStats.totalModelsTrend,
         activeLinksTrend: analyticsStats.activeLinksTrend,
         totalScansTrend: analyticsStats.totalScansTrend,
+        totalViewsTrend: analyticsStats.totalViewsTrend,
         storageUsed: storage,
       };
     },

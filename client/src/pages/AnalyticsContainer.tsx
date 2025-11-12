@@ -20,7 +20,14 @@ export default function AnalyticsContainer() {
 
   const { data: stats = defaultStats } = useQuery({
     queryKey: ['/api/analytics/stats', user?.uid],
-    queryFn: () => analyticsService.getStats(user!.uid),
+    queryFn: async () => {
+      const analyticsStats = await analyticsService.getStats(user!.uid);
+      const storage = await analyticsService.getStorageUsage(user!.uid);
+      return {
+        ...analyticsStats,
+        storageUsed: storage,
+      };
+    },
     enabled: !!user,
   });
 
