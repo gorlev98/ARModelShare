@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useLocation, useSearch } from 'wouter';
 import ARViewer from './ARViewer';
 import { shareService } from '@/services/share.service';
@@ -31,10 +31,10 @@ export default function ARViewerContainer() {
     incrementCounts();
   }, [linkId, source]);
 
-  const handleResolveLink = async (id: string) => {
+  const handleResolveLink = useCallback(async (id: string) => {
     try {
       const link = await shareService.getShareLink(id);
-      
+
       if (!link) {
         return null;
       }
@@ -55,9 +55,14 @@ export default function ARViewerContainer() {
       };
     } catch (error) {
       console.error('Failed to resolve link:', error);
+      toast({
+        title: 'Error loading model',
+        description: 'Unable to load the 3D model. Please check your connection.',
+        variant: 'destructive',
+      });
       return null;
     }
-  };
+  }, [toast]);
 
   return (
     <ARViewer

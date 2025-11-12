@@ -25,6 +25,7 @@ export default function ARViewer({
   const [modelName, setModelName] = useState(initialModelName);
   const [loading, setLoading] = useState(!initialModelUrl && !!linkId);
   const [error, setError] = useState<string | null>(null);
+  const [hasAttemptedResolve, setHasAttemptedResolve] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -38,10 +39,12 @@ export default function ARViewer({
 
   useEffect(() => {
     const resolveModel = async () => {
-      if (!linkId || modelUrl) return;
+      // Don't attempt if we already have a model URL, no linkId, or already tried
+      if (!linkId || modelUrl || hasAttemptedResolve) return;
 
       setLoading(true);
       setError(null);
+      setHasAttemptedResolve(true); // Mark that we've attempted
 
       try {
         if (onResolveLink) {
@@ -50,18 +53,19 @@ export default function ARViewer({
             setModelUrl(result.modelUrl);
             setModelName(result.modelName);
           } else {
-            setError('Link not found or expired');
+            setError('This link has expired or has been revoked');
           }
         }
       } catch (err) {
-        setError('Failed to load model');
+        console.error('Failed to resolve link:', err);
+        setError('Failed to load model. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
     resolveModel();
-  }, [linkId, modelUrl, onResolveLink]);
+  }, [linkId, modelUrl, hasAttemptedResolve, onResolveLink]);
 
   if (loading) {
     return (
@@ -74,19 +78,23 @@ export default function ARViewer({
     );
   }
 
-  if (error || !modelUrl) {
+  if (error || (!modelUrl && hasAttemptedResolve)) {
     return (
       <div className="h-screen flex items-center justify-center bg-background p-4">
-        <div className="text-center max-w-md">
-          <p className="text-destructive text-lg font-medium mb-4">
-            {error || 'Model not found'}
+        <div className="text-center max-w-md space-y-4">
+          <div className="text-6xl mb-4">🔒</div>
+          <h2 className="text-2xl font-bold">Access Denied</h2>
+          <p className="text-muted-foreground">
+            {error || 'This link is no longer available'}
           </p>
-          {onBack && (
-            <Button onClick={onBack} variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Go Back
-            </Button>
-          )}
+          <div className="pt-4">
+            {onBack && (
+              <Button onClick={onBack} variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Go Back
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );
