@@ -5,6 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface LoginProps {
   onEmailLogin?: (email: string, password: string) => Promise<void>;
@@ -21,21 +27,10 @@ export default function Login({ onEmailLogin, onGoogleLogin, isLogin = true, onT
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!onEmailLogin) return;
-    
+
     setLoading(true);
     try {
       await onEmailLogin(email, password);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    if (!onGoogleLogin) return;
-    
-    setLoading(true);
-    try {
-      await onGoogleLogin();
     } finally {
       setLoading(false);
     }
@@ -119,16 +114,26 @@ export default function Login({ onEmailLogin, onGoogleLogin, isLogin = true, onT
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            data-testid="button-google-login"
-          >
-            <Chrome className="h-4 w-4 mr-2" />
-            Google
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled
+                    data-testid="button-google-login"
+                  >
+                    <Chrome className="h-4 w-4 mr-2" />
+                    Google
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Coming soon in future versions</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           <div className="text-center text-sm">
             <button
