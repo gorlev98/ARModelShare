@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { QRCode } from 'react-qr-code';
-import { MoreVertical, ExternalLink, Copy, Download, XCircle, Clock } from 'lucide-react';
+import { MoreVertical, ExternalLink, Copy, Download, XCircle, Clock, QrCode as QrCodeIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -26,7 +26,7 @@ interface ShareManagerProps {
   onExtend?: (link: SharedLink) => void;
   onRevoke?: (link: SharedLink) => void;
   onCopy?: (url: string) => void;
-  onDownloadQR?: (link: SharedLink) => void;
+  onGenerateQR?: (link: SharedLink) => void;
   onOpen?: (link: SharedLink) => void;
 }
 
@@ -35,7 +35,7 @@ export default function ShareManager({
   onExtend,
   onRevoke,
   onCopy,
-  onDownloadQR,
+  onGenerateQR,
   onOpen,
 }: ShareManagerProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -156,10 +156,10 @@ export default function ShareManager({
                               Copy Link
                             </DropdownMenuItem>
                           )}
-                          {onDownloadQR && (
-                            <DropdownMenuItem onClick={() => onDownloadQR(link)}>
-                              <Download className="h-4 w-4 mr-2" />
-                              Download QR
+                          {onGenerateQR && (
+                            <DropdownMenuItem onClick={() => onGenerateQR(link)}>
+                              <QrCodeIcon className="h-4 w-4 mr-2" />
+                              Generate QR
                             </DropdownMenuItem>
                           )}
                           {onExtend && !isExpired && (

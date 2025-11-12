@@ -24,6 +24,7 @@ interface ShareModalProps {
   onDownloadQR: () => void;
   userId?: string;
   userLogoUrl?: string;
+  defaultTab?: 'link' | 'qr' | 'embed';
 }
 
 export function ShareModal({
@@ -35,6 +36,7 @@ export function ShareModal({
   onDownloadQR,
   userId,
   userLogoUrl,
+  defaultTab = 'link',
 }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
@@ -69,7 +71,7 @@ export function ShareModal({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="link" className="mt-4">
+        <Tabs defaultValue={defaultTab} className="mt-4">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="link" data-testid="tab-link">Direct Link</TabsTrigger>
             <TabsTrigger value="qr" data-testid="tab-qr">QR Code</TabsTrigger>
