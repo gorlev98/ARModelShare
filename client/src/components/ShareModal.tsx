@@ -23,6 +23,7 @@ interface ShareModalProps {
   onQROptionsChange: (options: QROptions) => void;
   onDownloadQR: () => void;
   userId?: string;
+  userLogoUrl?: string;
 }
 
 export function ShareModal({
@@ -33,6 +34,7 @@ export function ShareModal({
   onQROptionsChange,
   onDownloadQR,
   userId,
+  userLogoUrl,
 }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
@@ -59,7 +61,7 @@ export function ShareModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl" data-testid="share-modal">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" data-testid="share-modal">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="h-5 w-5" />
@@ -110,6 +112,7 @@ export function ShareModal({
               onOptionsChange={onQROptionsChange}
               onDownload={onDownloadQR}
               userId={userId}
+              userLogoUrl={userLogoUrl}
             />
           </TabsContent>
 

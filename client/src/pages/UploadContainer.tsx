@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import Upload from './Upload';
 import { ShareModal } from '@/components/ShareModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useModelUpload } from '@/hooks/useModelUpload';
 import { useShareLink } from '@/hooks/useShareLink';
+import { profileService } from '@/services/profile.service';
 import type { Model } from '@/types';
 
 export default function UploadContainer() {
@@ -14,9 +15,16 @@ export default function UploadContainer() {
   const queryClient = useQueryClient();
   const { uploadModel, uploadProgress, isUploading, validationStages, uploadedModel } = 
     useModelUpload(user?.uid || '');
-  const { shareUrl, qrOptions, setQROptions, createShareLink, downloadQR } = 
+  const { shareUrl, qrOptions, setQROptions, createShareLink, downloadQR } =
     useShareLink(user?.uid || '');
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Fetch user details for profile logo
+  const { data: userDetails } = useQuery({
+    queryKey: ['/api/user-details', user?.uid],
+    queryFn: () => profileService.getUserDetails(user!.uid),
+    enabled: !!user,
+  });
 
   const handleUpload = async (file: File) => {
     const model = await uploadModel(file);
@@ -62,6 +70,7 @@ export default function UploadContainer() {
           onQROptionsChange={setQROptions}
           onDownloadQR={handleDownloadQR}
           userId={user?.uid}
+          userLogoUrl={userDetails?.userLogo}
         />
       )}
     </>

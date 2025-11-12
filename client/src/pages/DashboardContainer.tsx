@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { modelService } from '@/services/model.service';
 import { shareService } from '@/services/share.service';
 import { analyticsService } from '@/services/analytics.service';
+import { profileService } from '@/services/profile.service';
 import { useShareLink } from '@/hooks/useShareLink';
 import { ShareModal } from '@/components/ShareModal';
 import { useState } from 'react';
@@ -60,6 +61,13 @@ export default function DashboardContainer() {
     enabled: !!user,
   });
 
+  // Fetch user details for profile logo
+  const { data: userDetails } = useQuery({
+    queryKey: ['/api/user-details', user?.uid],
+    queryFn: () => profileService.getUserDetails(user!.uid),
+    enabled: !!user,
+  });
+
   const handleShareModel = async (model: Model) => {
     setSelectedModel(model);
     const link = await createShareLink(model);
@@ -102,6 +110,7 @@ export default function DashboardContainer() {
           onQROptionsChange={setQROptions}
           onDownloadQR={handleDownloadQR}
           userId={user?.uid}
+          userLogoUrl={userDetails?.userLogo}
         />
       )}
     </>

@@ -23,6 +23,7 @@ interface QRCodeGeneratorProps {
   onOptionsChange: (options: QROptions) => void;
   onDownload: () => void;
   userId?: string;
+  userLogoUrl?: string;
 }
 
 export function QRCodeGenerator({
@@ -31,6 +32,7 @@ export function QRCodeGenerator({
   onOptionsChange,
   onDownload,
   userId,
+  userLogoUrl,
 }: QRCodeGeneratorProps) {
   const qrRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -100,38 +102,53 @@ export function QRCodeGenerator({
   }, [value, options]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-center p-8 bg-card rounded-lg border border-card-border">
-        <div ref={qrRef} className="bg-white p-4 rounded-lg" data-testid="qr-code">
-          {options.includeLogo && options.logoUrl ? (
-            <>
-              <canvas
-                ref={canvasRef}
-                style={{ display: 'none' }}
-                width={300}
-                height={300}
-              />
-              {qrImage && (
-                <img
-                  src={qrImage}
-                  alt="QR Code"
-                  width={256}
-                  height={256}
-                  style={{ imageRendering: 'pixelated' }}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Left Column - QR Preview */}
+      <div className="flex flex-col items-center space-y-4">
+        <div className="flex justify-center p-8 bg-card rounded-lg border border-card-border w-full">
+          <div ref={qrRef} className="bg-white p-4 rounded-lg" data-testid="qr-code">
+            {options.includeLogo && options.logoUrl ? (
+              <>
+                <canvas
+                  ref={canvasRef}
+                  style={{ display: 'none' }}
+                  width={300}
+                  height={300}
                 />
-              )}
-            </>
-          ) : (
-            <QRCode
-              value={value}
-              size={256}
-              bgColor={options.bgColor}
-              fgColor={options.fgColor}
-              level={options.level}
-            />
-          )}
+                {qrImage && (
+                  <img
+                    src={qrImage}
+                    alt="QR Code"
+                    width={256}
+                    height={256}
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                )}
+              </>
+            ) : (
+              <QRCode
+                value={value}
+                size={256}
+                bgColor={options.bgColor}
+                fgColor={options.fgColor}
+                level={options.level}
+              />
+            )}
+          </div>
         </div>
+
+        <Button
+          onClick={onDownload}
+          className="w-full"
+          data-testid="button-download-qr"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Download QR Code
+        </Button>
       </div>
+
+      {/* Right Column - Controls */}
+      <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -233,6 +250,7 @@ export function QRCodeGenerator({
                   onSelectLogo={(logoUrl) =>
                     onOptionsChange({ ...options, logoUrl })
                   }
+                  userLogoUrl={userLogoUrl}
                 />
               )}
             </div>
@@ -260,15 +278,7 @@ export function QRCodeGenerator({
           </>
         )}
       </div>
-
-      <Button
-        onClick={onDownload}
-        className="w-full"
-        data-testid="button-download-qr"
-      >
-        <Download className="h-4 w-4 mr-2" />
-        Download QR Code
-      </Button>
+      </div>
     </div>
   );
 }

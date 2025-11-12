@@ -21,12 +21,14 @@ interface LogoSelectorProps {
   userId: string;
   selectedLogoUrl?: string;
   onSelectLogo: (logoUrl: string) => void;
+  userLogoUrl?: string;
 }
 
 export function LogoSelector({
   userId,
   selectedLogoUrl,
   onSelectLogo,
+  userLogoUrl,
 }: LogoSelectorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -124,6 +126,36 @@ export function LogoSelector({
     <div className="space-y-3">
       {/* Logo Grid */}
       <div className="grid grid-cols-4 gap-2">
+        {/* User's Profile Logo (if set) */}
+        {userLogoUrl && (
+          <div className="relative group">
+            <button
+              onClick={() => onSelectLogo(userLogoUrl)}
+              className={`relative w-full aspect-square rounded-lg border-2 overflow-hidden transition-all hover:border-primary ${
+                selectedLogoUrl === userLogoUrl
+                  ? 'border-primary ring-2 ring-primary ring-offset-2'
+                  : 'border-border'
+              }`}
+              title="Your Profile Logo"
+            >
+              <img
+                src={userLogoUrl}
+                alt="Your Profile Logo"
+                className="w-full h-full object-contain p-1"
+              />
+              {selectedLogoUrl === userLogoUrl && (
+                <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
+                  <Check className="h-6 w-6 text-primary" />
+                </div>
+              )}
+            </button>
+            <div className="absolute -bottom-5 left-0 right-0 text-center">
+              <span className="text-xs text-muted-foreground bg-background px-1">Profile</span>
+            </div>
+          </div>
+        )}
+
+        {/* Collection Logos */}
         {logos.map((logo) => (
           <div key={logo.id} className="relative group">
             <button
@@ -238,7 +270,7 @@ export function LogoSelector({
         </Dialog>
       </div>
 
-      {logos.length === 0 && (
+      {logos.length === 0 && !userLogoUrl && (
         <p className="text-sm text-muted-foreground text-center py-2">
           No logos yet. Upload one to get started.
         </p>
