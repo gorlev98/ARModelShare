@@ -63,7 +63,14 @@ export const shareService = {
       isActive: data.is_active,
       expiresAt: data.expires_at,
       createdAt: data.created_at,
-      qrOptions: { fgColor: '#000000', bgColor: '#ffffff', level: 'M' },
+      qrOptions: {
+        fgColor: data.qr_options?.fg_color || '#000000',
+        bgColor: data.qr_options?.bg_color || '#ffffff',
+        level: (data.qr_options?.level as 'L' | 'M' | 'Q' | 'H') || 'M',
+        logoSize: data.qr_options?.logo_size || 20,
+        includeLogo: data.qr_options?.include_logo || false,
+        logoUrl: data.qr_options?.logo_url,
+      },
       views: data.views,
       scans: data.scans,
     };
@@ -91,7 +98,14 @@ export const shareService = {
       isActive: item.is_active,
       expiresAt: item.expires_at,
       createdAt: item.created_at,
-      qrOptions: { fgColor: '#000000', bgColor: '#ffffff', level: 'M' },
+      qrOptions: {
+        fgColor: item.qr_options?.fg_color || '#000000',
+        bgColor: item.qr_options?.bg_color || '#ffffff',
+        level: (item.qr_options?.level as 'L' | 'M' | 'Q' | 'H') || 'M',
+        logoSize: item.qr_options?.logo_size || 20,
+        includeLogo: item.qr_options?.include_logo || false,
+        logoUrl: item.qr_options?.logo_url,
+      },
       views: item.views,
       scans: item.scans,
     }));
@@ -124,7 +138,14 @@ export const shareService = {
       isActive: item.is_active,
       expiresAt: item.expires_at,
       createdAt: item.created_at,
-      qrOptions: { fgColor: '#000000', bgColor: '#ffffff', level: 'M' },
+      qrOptions: {
+        fgColor: item.qr_options?.fg_color || '#000000',
+        bgColor: item.qr_options?.bg_color || '#ffffff',
+        level: (item.qr_options?.level as 'L' | 'M' | 'Q' | 'H') || 'M',
+        logoSize: item.qr_options?.logo_size || 20,
+        includeLogo: item.qr_options?.include_logo || false,
+        logoUrl: item.qr_options?.logo_url,
+      },
       views: item.views,
       scans: item.scans,
     }));

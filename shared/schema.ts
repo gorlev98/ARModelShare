@@ -133,6 +133,21 @@ export const userProfileSchema = z.object({
 export type UserProfile = z.infer<typeof userProfileSchema>;
 
 // ============================================================================
+// USER SCHEMA - For backend storage (template/unused)
+// ============================================================================
+
+export const userSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  email: z.string().email(),
+});
+
+export const insertUserSchema = userSchema.omit({ id: true });
+
+export type User = z.infer<typeof userSchema>;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
+// ============================================================================
 // USER DETAILS SCHEMA - Extended profile information
 // ============================================================================
 

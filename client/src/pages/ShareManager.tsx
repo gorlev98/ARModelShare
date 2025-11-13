@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { QRCode } from 'react-qr-code';
+import QRCode from 'react-qr-code';
 import { MoreVertical, ExternalLink, Copy, Download, XCircle, Clock, QrCode as QrCodeIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

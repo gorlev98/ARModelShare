@@ -6,6 +6,8 @@ export type {
   InsertSharedLink,
   QROptions,
   AnalyticsStats,
+  StatTrend,
+  MonthlyStats,
   ActivityEvent,
   ValidationStage,
   UserProfile,
