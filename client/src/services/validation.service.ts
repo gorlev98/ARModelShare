@@ -1,6 +1,5 @@
 import JSZip from 'jszip';
 import type { ValidationStage } from '@/types';
-import * as JSZip from 'jszip';
 
 export const validationService = {
   // Validate uploaded 3D models for AR compatibility
