@@ -1,11 +1,12 @@
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+// @ts-ignore - react-day-picker v8 doesn't ship with TypeScript definitions
 import { DayPicker } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>
+export type CalendarProps = React.ComponentPropsWithoutRef<typeof DayPicker>
 
 function Calendar({
   className,
@@ -52,13 +53,13 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ className, ...props }) => (
+        IconLeft: ({ className, ...props }: React.ComponentProps<'svg'>) => (
           <ChevronLeft className={cn("h-4 w-4", className)} {...props} />
         ),
-        IconRight: ({ className, ...props }) => (
+        IconRight: ({ className, ...props }: React.ComponentProps<'svg'>) => (
           <ChevronRight className={cn("h-4 w-4", className)} {...props} />
         ),
-      }}
+      } as any} // Type assertion needed for custom components in react-day-picker v8
       {...props}
     />
   )
