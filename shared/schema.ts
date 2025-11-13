@@ -11,7 +11,7 @@ export const modelSchema = z.object({
   fileSize: z.number(),
   modelUrl: z.string(),
   uploadedAt: z.number(),
-  validationStatus: z.enum(['processing', 'ready', 'failed']),
+  validationStatus: z.enum(['processing', 'ready', 'warning', 'failed', 'error']),
   validationIssues: z.array(z.string()).optional(),
 });
 
