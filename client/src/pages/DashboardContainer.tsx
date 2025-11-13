@@ -179,10 +179,12 @@ export default function DashboardContainer() {
           totalModels: 0,
           activeLinks: 0,
           totalScans: 0,
+          totalViews: 0,
           storageUsed: '0 MB',
           totalModelsTrend: undefined,
           activeLinksTrend: undefined,
           totalScansTrend: undefined,
+          totalViewsTrend: undefined,
         }}
         recentModels={recentModels}
         recentLinks={recentLinks}

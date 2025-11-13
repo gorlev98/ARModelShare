@@ -139,14 +139,16 @@ export default function ARViewer({
       </header>
 
       <div className="flex-1 pt-16">
-        <ModelViewer
-          modelUrl={modelUrl}
-          alt={modelName}
-          className="w-full h-full"
-          ar
-          autoRotate
-          cameraControls
-        />
+        {modelUrl && (
+          <ModelViewer
+            modelUrl={modelUrl}
+            alt={modelName || 'AR Model'}
+            className="w-full h-full"
+            ar
+            autoRotate
+            cameraControls
+          />
+        )}
       </div>
 
       <div className="absolute bottom-8 left-0 right-0 flex justify-center">

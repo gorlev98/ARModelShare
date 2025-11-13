@@ -93,8 +93,8 @@ export const analyticsService = {
       this.getPreviousMonthStats(userId),
     ]);
 
-    const totalScans = shareLinks.reduce((sum, link) => sum + link.scans, 0);
-    const totalViews = shareLinks.reduce((sum, link) => sum + link.views, 0);
+    const totalScans = shareLinks.reduce((sum: number, link) => sum + link.scans, 0);
+    const totalViews = shareLinks.reduce((sum: number, link) => sum + link.views, 0);
 
     // Save current month's snapshot (upsert)
     await this.saveMonthlySnapshot(userId, {

@@ -11,13 +11,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import type { Model, SharedLink, ActivityEvent } from '@/types';
+import type { Model, SharedLink, ActivityEvent, AnalyticsStats } from '@/types';
 
 interface DashboardProps {
-  stats: {
-    totalModels: number;
-    activeLinks: number;
-    totalScans: number;
+  stats: AnalyticsStats & {
     storageUsed: string;
   };
   recentModels: Model[];
